@@ -97,14 +97,37 @@ export async function POST(req: Request) {
             });
         }
 
-        // Mock response if Stripe keys are missing
-        if (!process.env.STRIPE_SECRET_KEY) {
-            return NextResponse.json({
-                url: "/checkout/success",
-                mock: true,
-                message: "Stripe key missing. Simulated success redirect."
-            });
-        }
+        // Create Pending Order in Supabase
+        const { data: userData } = await supabase.auth.getUser();
+        const userId = userData.user?.id || null;
+
+        const { data: order, error: orderError } = await supabase
+            .from("orders")
+            .insert({
+                user_id: userId,
+                total_amount: subtotal + taxAmount + shippingAmount,
+                tax_amount: taxAmount,
+                shipping_amount: shippingAmount,
+                status: "pending",
+            })
+            .select()
+            .single();
+
+        if (orderError) throw orderError;
+
+        // Insert Order Items
+        const orderItems = items.map((item: any) => {
+            const lineItem = line_items.find(li => li.price_data.product_data.name.includes(item.name) || li.price_data.product_data.name === item.name);
+            return {
+                order_id: order.id,
+                product_id: item.productId || item.id,
+                variant_id: item.productId ? item.id : null,
+                quantity: item.quantity,
+                price: (lineItem?.price_data.unit_amount || 0) / 100,
+            };
+        });
+
+        await supabase.from("order_items").insert(orderItems);
 
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ["card"],
@@ -113,9 +136,16 @@ export async function POST(req: Request) {
             success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/`,
             metadata: {
-                userId: (await supabase.auth.getUser()).data.user?.id || "guest",
+                orderId: order.id,
+                userId: userId || "guest",
             },
         });
+
+        // Update order with Stripe session ID
+        await supabase
+            .from("orders")
+            .update({ stripe_checkout_id: session.id })
+            .eq("id", order.id);
 
         return NextResponse.json({ url: session.url });
     } catch (error: any) {

@@ -6,12 +6,18 @@ import Link from "next/link";
 import { ArrowLeft, Share2 } from "lucide-react";
 import Image from "next/image";
 
-/**
- * THE FIX: Adding 'force-dynamic' ensures that the page is rendered on the server
- * at request time, preventing build-time errors related to cookie access in
- * static environments.
- */
-export const dynamic = 'force-dynamic';
+import { createClient as createPublicClient } from "@/lib/supabase/public";
+
+export async function generateStaticParams() {
+    const supabase = createPublicClient();
+    const { data: products } = await supabase
+        .from("products")
+        .select("id");
+
+    return products?.map((product) => ({
+        id: product.id,
+    })) || [];
+}
 
 interface PageProps {
     params: Promise<{ id: string }>;

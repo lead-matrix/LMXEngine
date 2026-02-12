@@ -1,43 +1,39 @@
-"use client";
-
-import { useEffect } from "react";
-import { useCart } from "@/context/CartContext";
-import { CheckCircle2, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
+import { CheckCircle, ArrowRight } from "lucide-react";
 
-export default function CheckoutSuccessPage() {
-    const { clearCart } = useCart();
+export const metadata = {
+    title: "Order Confirmed | The Obsidian Palace",
+};
 
-    useEffect(() => {
-        clearCart();
-    }, [clearCart]);
-
+export default function SuccessPage() {
     return (
-        <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-1000">
-            <div className="relative w-24 h-24 mb-12">
-                <Image src="/logo.jpg" alt="Logo" fill className="object-contain opacity-50" />
-            </div>
+        <div className="min-h-[80vh] flex items-center justify-center p-6">
+            <div className="max-w-md w-full text-center space-y-12 animate-in fade-in zoom-in duration-1000">
+                <div className="flex justify-center">
+                    <div className="w-24 h-24 rounded-full border border-gold/30 flex items-center justify-center bg-gold/5 relative">
+                        <CheckCircle className="text-gold w-12 h-12" />
+                        <div className="absolute inset-0 rounded-full border border-gold/20 animate-ping opacity-20"></div>
+                    </div>
+                </div>
 
-            <div className="bg-gold/10 p-6 rounded-full mb-8">
-                <CheckCircle2 className="w-12 h-12 text-gold" />
-            </div>
+                <div className="space-y-4">
+                    <h1 className="text-4xl font-serif text-white tracking-tight">Order Confirmed</h1>
+                    <p className="text-zinc-500 uppercase tracking-[0.2em] text-[10px] leading-relaxed">
+                        Your selection has been curated and is being prepared for transit to your location.
+                    </p>
+                </div>
 
-            <h1 className="text-4xl md:text-6xl font-serif mb-4 tracking-tight">Order Authenticated</h1>
-            <p className="text-white/50 uppercase tracking-[0.4em] text-xs mb-12 max-w-sm leading-loose">
-                Your selection has been secured.
-                A confirmation email will arrive at the speed of light.
-            </p>
+                <div className="bg-zinc-950 border border-gold/10 p-6 space-y-4">
+                    <p className="text-[10px] uppercase tracking-widest text-zinc-600 font-medium">A confirmation transmission has been sent to your email.</p>
+                </div>
 
-            <div className="w-12 h-px bg-gold/30 mb-12" />
-
-            <Link href="/" className="group flex items-center gap-3 border border-gold/30 px-10 py-4 text-gold hover:bg-gold hover:text-black transition-all duration-700 uppercase text-[10px] tracking-[0.4em]">
-                Return To Palace
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-2 transition-transform duration-500" />
-            </Link>
-
-            <div className="mt-24 text-[9px] text-white/20 uppercase tracking-[0.5em]">
-                DINA COSMETIC | SECURE TRANSACTION
+                <Link
+                    href="/"
+                    className="inline-flex items-center gap-3 bg-white text-black px-12 py-5 text-[10px] font-bold uppercase tracking-[0.4em] hover:bg-gold transition-all duration-500 group"
+                >
+                    Return to Store
+                    <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                </Link>
             </div>
         </div>
     );

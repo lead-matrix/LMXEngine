@@ -11,7 +11,7 @@ export async function ProductGrid() {
 
     if (!products || products.length === 0) {
         return (
-            <div className="py-24 text-center">
+            <div id="shop" className="py-24 text-center">
                 <p className="text-white/30 uppercase tracking-[0.5em] text-xs">The vault is currently sealed.</p>
             </div>
         );

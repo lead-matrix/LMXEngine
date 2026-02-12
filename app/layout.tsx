@@ -4,6 +4,7 @@ import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import { Navbar } from "@/components/Navbar";
 import { ShoppingBagDrawer } from "@/components/ShoppingBagDrawer";
+import { Analytics } from "@vercel/analytics/next"
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -39,6 +40,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { Footer } from "@/components/Footer";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -46,6 +49,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
+      <head>
+        <link rel="icon" href="/favicon.jpg" />
+      </head>
       <body
         className={`${playfair.variable} ${inter.variable} font-sans antialiased`}
       >
@@ -56,7 +62,9 @@ export default function RootLayout({
               {children}
             </main>
             <ShoppingBagDrawer />
+            <Footer />
           </div>
+          <Analytics />
         </CartProvider>
       </body>
     </html>
