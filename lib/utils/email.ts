@@ -1,19 +1,4 @@
-import { Resend } from 'resend';
-
-let resendInstance: Resend | null = null;
-
-const getResend = () => {
-    if (resendInstance) return resendInstance;
-
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) {
-        // Mocking or returning a fake client during build phase
-        resendInstance = new Resend('re_123');
-        return resendInstance;
-    }
-    resendInstance = new Resend(apiKey);
-    return resendInstance;
-};
+// Note: Resend is imported dynamically inside functions to prevent build-time constructor errors.
 
 interface OrderEmailProps {
     orderId: string;
@@ -30,8 +15,16 @@ export async function sendOrderConfirmationEmail({
     customerName,
     totalAmount
 }: OrderEmailProps) {
-    const resend = getResend();
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+        console.warn("RESEND_API_KEY is missing");
+        return;
+    }
+
     try {
+        const { Resend } = await import('resend');
+        const resend = new Resend(apiKey);
+
         await resend.emails.send({
             from: 'DINA COSMETIC <concierge@dinacosmetic.store>',
             to: customerEmail,
@@ -69,8 +62,16 @@ export async function sendShippingNotificationEmail({
     trackingNumber,
     labelUrl
 }: OrderEmailProps) {
-    const resend = getResend();
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+        console.warn("RESEND_API_KEY is missing");
+        return;
+    }
+
     try {
+        const { Resend } = await import('resend');
+        const resend = new Resend(apiKey);
+
         await resend.emails.send({
             from: 'DINA COSMETIC <concierge@dinacosmetic.store>',
             to: customerEmail,

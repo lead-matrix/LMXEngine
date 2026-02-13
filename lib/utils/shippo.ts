@@ -1,36 +1,29 @@
-import * as Shippo from 'shippo';
-
-let shippoInstance: any = null;
-
-const getShippo = () => {
-    if (shippoInstance) return shippoInstance;
-
-    const apiKey = process.env.SHIPPO_API_KEY;
-    if (!apiKey) {
-        return {
-            shipment: { create: async () => ({ rates: [] }) },
-            transaction: { create: async () => ({}) }
-        } as any;
-    }
-
-    try {
-        // Handle different export patterns (ESM vs CJS)
-        // @ts-ignore
-        const ShippoClass = (Shippo as any).default || Shippo;
-        shippoInstance = new ShippoClass(apiKey);
-        return shippoInstance;
-    } catch (e) {
-        console.error("Failed to initialize Shippo:", e);
-        return {
-            shipment: { create: async () => ({ rates: [] }) },
-            transaction: { create: async () => ({}) }
-        } as any;
-    }
-};
+// Note: Shippo is imported dynamically inside the function to avoid build-time constructor errors.
 
 export async function createShippingLabel(order: any) {
-    const shippo = getShippo();
+    const apiKey = process.env.SHIPPO_API_KEY;
+    if (!apiKey) {
+        console.warn("SHIPPO_API_KEY is missing");
+        return { tracking_number: "SHP-DEBUG", label_url: "#", status: "PENDING" };
+    }
+
     try {
+        // Dynamic import to handle constructor issues in different build environments
+        const ShippoModule = await import('shippo');
+        // @ts-ignore
+        const Shippo = ShippoModule.default || ShippoModule;
+
+        let shippo: any;
+        if (typeof Shippo === 'function') {
+            try {
+                shippo = new (Shippo as any)(apiKey);
+            } catch (e) {
+                shippo = (Shippo as any)(apiKey);
+            }
+        } else {
+            throw new Error("Shippo is not a constructor or function");
+        }
+
         const shipment = await shippo.shipment.create({
             address_from: {
                 name: "DINA COSMETIC | The Obsidian Palace",
@@ -59,9 +52,7 @@ export async function createShippingLabel(order: any) {
             async: false,
         });
 
-        // Automatically pick the cheapest rate for demo purpose, or "best" rate
         const rate = shipment.rates[0];
-
         const transaction = await shippo.transaction.create({
             rate: rate.object_id,
             label_file_type: "PDF",
