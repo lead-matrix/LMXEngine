@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { createMockSupabaseClient } from './mock'
 
 /**
  * FIXED: This client checks if it's being called during a "Static Generation" 
@@ -11,19 +12,7 @@ export async function createClient() {
 
     if (!supabaseUrl || !supabaseKey) {
         console.warn("Supabase environment variables are missing in server client. Returning placeholder for static generation.");
-        return {
-            auth: { getUser: () => Promise.resolve({ data: { user: null }, error: null }) },
-            from: () => ({
-                select: () => ({
-                    eq: () => ({ single: () => Promise.resolve({ data: null, error: null }) }),
-                    order: () => Promise.resolve({ data: [], error: null }),
-                    limit: () => Promise.resolve({ data: [], error: null })
-                }),
-                insert: () => Promise.resolve({ data: null, error: null }),
-                update: () => Promise.resolve({ data: null, error: null }),
-                upsert: () => Promise.resolve({ data: null, error: null })
-            })
-        } as any;
+        return createMockSupabaseClient();
     }
 
     const cookieStore = await cookies()

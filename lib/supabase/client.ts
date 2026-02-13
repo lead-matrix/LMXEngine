@@ -1,4 +1,5 @@
 import { createBrowserClient } from '@supabase/ssr'
+import { createMockSupabaseClient } from './mock'
 
 export function createClient() {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -7,10 +8,7 @@ export function createClient() {
     if (!supabaseUrl || !supabaseKey) {
         if (typeof window === 'undefined') {
             console.warn("Supabase environment variables are missing during build/static generation. Returning placeholder client.");
-            return {
-                auth: { onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => { } } } }) },
-                from: () => ({ select: () => ({ ilike: () => ({ limit: () => ({}) }) }) })
-            } as any;
+            return createMockSupabaseClient();
         }
         throw new Error("Missing Supabase environment variables. Please check your .env.local file.");
     }
