@@ -10,8 +10,19 @@ export function createClient() {
 
     if (!supabaseUrl || !supabaseKey) {
         // Log a warning instead of throwing during build if variables are missing
-        console.warn("Supabase environment variables are missing. This is expected during some build phases if they aren't provided.");
-        return null;
+        console.warn("Supabase environment variables are missing in public client. Returning placeholder for static generation.");
+        return {
+            from: () => ({
+                select: () => ({
+                    eq: () => ({ single: () => Promise.resolve({ data: null, error: null }) }),
+                    order: () => Promise.resolve({ data: [], error: null }),
+                    limit: () => Promise.resolve({ data: [], error: null })
+                }),
+                insert: () => Promise.resolve({ data: null, error: null }),
+                update: () => Promise.resolve({ data: null, error: null }),
+                upsert: () => Promise.resolve({ data: null, error: null })
+            })
+        } as any;
     }
 
     return createSupabaseClient(

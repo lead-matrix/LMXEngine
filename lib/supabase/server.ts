@@ -10,9 +10,20 @@ export async function createClient() {
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
-        console.warn("Supabase environment variables are missing in server client. This is expected during some build phases.");
-        // Return a mock object or handle it in the caller
-        return null as any;
+        console.warn("Supabase environment variables are missing in server client. Returning placeholder for static generation.");
+        return {
+            auth: { getUser: () => Promise.resolve({ data: { user: null }, error: null }) },
+            from: () => ({
+                select: () => ({
+                    eq: () => ({ single: () => Promise.resolve({ data: null, error: null }) }),
+                    order: () => Promise.resolve({ data: [], error: null }),
+                    limit: () => Promise.resolve({ data: [], error: null })
+                }),
+                insert: () => Promise.resolve({ data: null, error: null }),
+                update: () => Promise.resolve({ data: null, error: null }),
+                upsert: () => Promise.resolve({ data: null, error: null })
+            })
+        } as any;
     }
 
     const cookieStore = await cookies()

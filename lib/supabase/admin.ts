@@ -9,7 +9,18 @@ export const getSupabaseAdmin = () => {
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!supabaseUrl || !serviceRoleKey) {
-        return {} as any;
+        return {
+            from: () => ({
+                select: () => ({
+                    eq: () => ({ single: () => Promise.resolve({ data: null, error: null }) }),
+                    order: () => Promise.resolve({ data: [], error: null }),
+                    limit: () => Promise.resolve({ data: [], error: null })
+                }),
+                insert: () => Promise.resolve({ data: null, error: null }),
+                update: () => Promise.resolve({ data: null, error: null }),
+                upsert: () => Promise.resolve({ data: null, error: null })
+            })
+        } as any;
     }
 
     supabaseAdminInstance = createClient(supabaseUrl, serviceRoleKey, {
