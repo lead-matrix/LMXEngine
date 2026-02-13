@@ -1,9 +1,13 @@
-import { createClient } from "@/lib/supabase/server";
+"use client";
+
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import {
     TrendingUp,
     Users,
     ShoppingBag,
-    AlertCircle
+    AlertCircle,
+    Loader2
 } from "lucide-react";
 
 interface RecentOrder {
@@ -16,24 +20,65 @@ interface RecentOrder {
     } | null;
 }
 
-export default async function AdminDashboard() {
-    const supabase = await createClient();
+interface DashboardStats {
+    productsCount: number;
+    ordersCount: number;
+    totalRevenue: number;
+    recentOrders: RecentOrder[];
+}
 
-    // Fetch Stats
-    const { count: productsCount } = await supabase.from('products').select('*', { count: 'exact', head: true });
-    const { count: ordersCount } = await supabase.from('orders').select('*', { count: 'exact', head: true });
-    const { data: recentOrders } = await supabase
-        .from('orders')
-        .select('id, total_amount, status, created_at, profiles(email)')
-        .order('created_at', { ascending: false })
-        .limit(5);
+export default function AdminDashboard() {
+    const [stats, setStats] = useState<DashboardStats | null>(null);
+    const [loading, setLoading] = useState(true);
 
-    const { data: revenueData } = await supabase
-        .from('orders')
-        .select('total_amount')
-        .eq('status', 'paid');
+    useEffect(() => {
+        async function fetchStats() {
+            setLoading(true);
+            const supabase = createClient();
 
-    const totalRevenue = (revenueData as { total_amount: number }[] | null)?.reduce((acc: number, curr: { total_amount: number }) => acc + (curr.total_amount || 0), 0) || 0;
+            try {
+                // Fetch Stats in parallel
+                const [
+                    { count: pCount },
+                    { count: oCount },
+                    { data: revenueData },
+                    { data: oData }
+                ] = await Promise.all([
+                    supabase.from('products').select('*', { count: 'exact', head: true }),
+                    supabase.from('orders').select('*', { count: 'exact', head: true }),
+                    supabase.from('orders').select('total_amount').eq('status', 'paid'),
+                    supabase.from('orders')
+                        .select('id, total_amount, status, created_at, profiles(email)')
+                        .order('created_at', { ascending: false })
+                        .limit(5)
+                ]);
+
+                const revenue = (revenueData as any[])?.reduce((acc, curr) => acc + (curr.total_amount || 0), 0) || 0;
+
+                setStats({
+                    productsCount: pCount || 0,
+                    ordersCount: oCount || 0,
+                    totalRevenue: revenue,
+                    recentOrders: (oData as any[]) || []
+                });
+            } catch (error) {
+                console.error("Dashboard fetch error:", error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchStats();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="h-[60vh] flex flex-col items-center justify-center space-y-4">
+                <Loader2 className="w-8 h-8 text-gold animate-spin" />
+                <p className="text-zinc-500 uppercase tracking-[0.3em] text-[10px]">Loading Palace Metrics...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8 animate-in fade-in duration-700">
@@ -46,27 +91,27 @@ export default async function AdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard
                     label="Total Revenue"
-                    value={`$${totalRevenue.toLocaleString()}`}
+                    value={`$${stats?.totalRevenue.toLocaleString()}`}
                     icon={<TrendingUp className="text-emerald-500" />}
-                    sub="Last 30 days: +12%"
+                    sub="Gross Manifestations"
                 />
                 <StatCard
                     label="Active Orders"
-                    value={ordersCount?.toString() || "0"}
+                    value={stats?.ordersCount.toString() || "0"}
                     icon={<ShoppingBag className="text-gold" />}
-                    sub="4 pending shipment"
+                    sub="Current Acquisitions"
                 />
                 <StatCard
-                    label="Total Customers"
+                    label="Palace Residents"
                     value={"1.2k"}
                     icon={<Users className="text-blue-500" />}
-                    sub="+84 this week"
+                    sub="Loyal Clientele"
                 />
                 <StatCard
-                    label="Low Stock Alerts"
-                    value={"3"}
-                    icon={<AlertCircle className="text-rose-500" />}
-                    sub="Action required"
+                    label="Live Artifacts"
+                    value={stats?.productsCount.toString() || "0"}
+                    icon={<AlertCircle className="text-gold/50" />}
+                    sub="Active Inventory"
                 />
             </div>
 
@@ -85,7 +130,7 @@ export default async function AdminDashboard() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gold/5">
-                            {(recentOrders as unknown as RecentOrder[] | null)?.map((order: RecentOrder) => (
+                            {stats?.recentOrders.map((order) => (
                                 <tr key={order.id} className="text-sm">
                                     <td className="py-4 font-mono text-zinc-400">#{order.id.slice(0, 8)}</td>
                                     <td className="py-4">{order.profiles?.email || 'Guest'}</td>
@@ -100,7 +145,7 @@ export default async function AdminDashboard() {
                                     <td className="py-4 text-zinc-500">{new Date(order.created_at).toLocaleDateString()}</td>
                                 </tr>
                             ))}
-                            {!recentOrders?.length && (
+                            {!stats?.recentOrders.length && (
                                 <tr>
                                     <td colSpan={5} className="py-12 text-center text-zinc-500 italic">No recent transactions found.</td>
                                 </tr>
