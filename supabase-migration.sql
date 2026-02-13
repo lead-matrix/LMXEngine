@@ -112,6 +112,24 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION decrement_product_stock(p_id UUID, amount INTEGER)
+RETURNS VOID AS $$
+BEGIN
+  -- Note: Products might not have direct stock if they are just containers for variants,
+  -- but we'll implement this for products that don't use the variants system.
+  -- You might need a stock_quantity column on products if you want to use this.
+  -- For now, we'll try to find a stock field or skip if it doesn't exist.
+  -- Adding a stock_quantity column to products if it doesn't exist:
+  UPDATE public.products
+  SET metadata = jsonb_set(
+    COALESCE(metadata, '{}'::jsonb), 
+    '{stock_quantity}', 
+    (COALESCE((metadata->>'stock_quantity')::int, 0) - amount)::text::jsonb
+  )
+  WHERE id = p_id;
+END;
+$$ LANGUAGE plpgsql;
+
 -- 9. RLS Policies
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;

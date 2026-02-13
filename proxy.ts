@@ -56,7 +56,7 @@ export async function proxy(request: NextRequest) {
 
     const { data: { user } } = await supabase.auth.getUser()
 
-    // Admin route protection
+    // 1. Admin Portal Protection
     if (request.nextUrl.pathname.startsWith('/admin')) {
         if (!user) {
             return NextResponse.redirect(new URL('/login', request.url))
@@ -71,6 +71,18 @@ export async function proxy(request: NextRequest) {
         if (!profile || profile.role !== 'admin') {
             return NextResponse.redirect(new URL('/', request.url))
         }
+    }
+
+    // 2. Checkout Flow Protection
+    if (request.nextUrl.pathname.startsWith('/checkout')) {
+        if (!user) {
+            return NextResponse.redirect(new URL('/login?next=/checkout', request.url))
+        }
+    }
+
+    // 3. Prevent logged in users from visiting login
+    if (user && request.nextUrl.pathname.startsWith('/login')) {
+        return NextResponse.redirect(new URL('/', request.url))
     }
 
     return response

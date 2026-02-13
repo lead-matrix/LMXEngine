@@ -2,9 +2,35 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { createShippingLabel } from "@/lib/utils/shippo";
+import { sendShippingNotificationEmail } from "@/lib/utils/email";
+import { redirect } from "next/navigation";
+
+// Helper to ensure the user is an admin
+async function ensureAdmin() {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        throw new Error("Authentication required");
+    }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+    if (profile?.role !== 'admin') {
+        throw new Error("Unauthorized: Obsidian Palace access restricted to administrators");
+    }
+
+    return supabase;
+}
 
 export async function updateProduct(formData: FormData) {
-    const supabase = await createClient();
+    const supabase = await ensureAdmin();
+
     const id = formData.get('id') as string;
     const name = formData.get('name') as string;
     const description = formData.get('description') as string;
@@ -51,7 +77,8 @@ export async function updateProduct(formData: FormData) {
 }
 
 export async function createProduct(formData: FormData) {
-    const supabase = await createClient();
+    const supabase = await ensureAdmin();
+
     const name = formData.get('name') as string;
     const description = formData.get('description') as string;
     const base_price = parseFloat(formData.get('base_price') as string);
@@ -95,7 +122,7 @@ export async function createProduct(formData: FormData) {
 }
 
 export async function deleteProduct(id: string) {
-    const supabase = await createClient();
+    const supabase = await ensureAdmin();
     const { error } = await supabase.from('products').delete().eq('id', id);
 
     if (error) throw new Error(error.message);
@@ -103,11 +130,8 @@ export async function deleteProduct(id: string) {
     revalidatePath('/admin/products');
 }
 
-import { createShippingLabel } from "@/lib/utils/shippo";
-import { sendShippingNotificationEmail } from "@/lib/utils/email";
-
 export async function fulfillOrder(orderId: string) {
-    const supabase = await createClient();
+    const supabase = await ensureAdmin();
 
     // 1. Get order details with customer email
     const { data: order, error: orderError } = await supabase
@@ -153,7 +177,7 @@ export async function fulfillOrder(orderId: string) {
 }
 
 export async function updateOrderStatus(orderId: string, status: string) {
-    const supabase = await createClient();
+    const supabase = await ensureAdmin();
     const { error } = await supabase
         .from('orders')
         .update({ status })
@@ -163,3 +187,4 @@ export async function updateOrderStatus(orderId: string, status: string) {
 
     revalidatePath('/admin/orders');
 }
+

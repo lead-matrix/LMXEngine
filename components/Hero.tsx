@@ -2,6 +2,7 @@
 
 import { useCart } from "@/context/CartContext";
 import { ArrowRight, Search, X } from "lucide-react";
+import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -104,20 +105,21 @@ export function Hero() {
 
                         <div className="grid grid-cols-1 gap-4">
                             {searchResults.map((product) => (
-                                <a
+                                <Link
                                     key={product.id}
                                     href={`/shop/${product.id}`}
+                                    onClick={() => setIsSearchOpen(false)}
                                     className="flex items-center gap-6 p-4 border border-white/5 hover:border-gold/20 bg-zinc-950/50 transition-all group"
                                 >
-                                    <div className="w-16 h-16 bg-zinc-900 relative">
+                                    <div className="w-16 h-16 bg-zinc-900 relative flex-shrink-0">
                                         <Image src={product.images?.[0] || "/logo.jpg"} alt={product.name} fill className="object-cover" />
                                     </div>
                                     <div className="flex-grow">
                                         <h3 className="text-sm font-serif text-white group-hover:text-gold transition-colors">{product.name}</h3>
                                         <p className="text-[10px] uppercase tracking-widest text-zinc-500">{product.category}</p>
                                     </div>
-                                    <span className="text-xs text-zinc-400 font-serif">${product.base_price}</span>
-                                </a>
+                                    <span className="text-xs text-zinc-400 font-serif whitespace-nowrap">${Number(product.base_price).toFixed(2)}</span>
+                                </Link>
                             ))}
                             {searchQuery.length > 2 && searchResults.length === 0 && (
                                 <p className="text-zinc-600 text-[10px] uppercase tracking-[0.3em] py-12 text-center italic">No artifacts found in the archives</p>

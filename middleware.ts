@@ -54,17 +54,15 @@ export async function middleware(request: NextRequest) {
         }
     )
 
-    // Refresh session if expired - required for Server Components
-    // https://supabase.com/docs/guides/auth/ssr/nextjs
     const { data: { user } } = await supabase.auth.getUser()
 
-    // 1. Path Protection: Admin Portal
+    // 1. Protect Admin Routes
     if (request.nextUrl.pathname.startsWith('/admin')) {
         if (!user) {
             return NextResponse.redirect(new URL('/login', request.url))
         }
 
-        // Fetch user profile to check role
+        // Check for admin role
         const { data: profile } = await supabase
             .from('profiles')
             .select('role')
@@ -76,19 +74,8 @@ export async function middleware(request: NextRequest) {
         }
     }
 
-    // 2. Path Protection: Checkout Flow
-    if (request.nextUrl.pathname.startsWith('/checkout')) {
-        if (!user) {
-            // Redirect to login if user is guest and trying to checkout
-            // Note: If you allow guest checkout, remove this check.
-            return NextResponse.redirect(new URL('/login?next=/checkout', request.url))
-        }
-    }
-
-    // 3. Prevent logged in users from visiting login/signup
-    if (user && (request.nextUrl.pathname.startsWith('/login'))) {
-        return NextResponse.redirect(new URL('/', request.url))
-    }
+    // 2. Zero 404 Policy: Redirect non-existent routes if needed 
+    // (Next.js automatically handles not-found.tsx, but middleware can be used for custom logic)
 
     return response
 }
