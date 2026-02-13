@@ -1,5 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
+"use client";
+
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { ProductCard } from "./ProductCard";
+import { Loader2 } from "lucide-react";
 
 interface Variant {
     id: string;
@@ -15,26 +19,47 @@ interface Product {
     variants: Variant[];
 }
 
-export async function ProductGrid() {
-    const supabase = await createClient();
+export function ProductGrid() {
+    const [products, setProducts] = useState<Product[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const { data: products } = await supabase
-        .from("products")
-        .select("*, variants(*)")
-        .order("created_at", { ascending: false });
+    useEffect(() => {
+        async function fetchProducts() {
+            const supabase = createClient();
+            const { data, error } = await supabase
+                .from("products")
+                .select("*, variants(*)")
+                .order("created_at", { ascending: false });
 
-    const typedProducts = (products as unknown as Product[] | null);
+            if (error) {
+                console.error("Error fetching products:", error);
+            } else {
+                setProducts((data as any[]) || []);
+            }
+            setLoading(false);
+        }
+        fetchProducts();
+    }, []);
 
-    if (!typedProducts || typedProducts.length === 0) {
+    if (loading) {
+        return (
+            <div className="py-24 flex flex-col items-center justify-center space-y-4">
+                <Loader2 className="w-8 h-8 text-gold animate-spin" />
+                <p className="text-zinc-500 uppercase tracking-[0.4em] text-[10px] font-light italic">Opening The Vault...</p>
+            </div>
+        );
+    }
+
+    if (!products || products.length === 0) {
         return (
             <div id="shop" className="py-24 text-center">
-                <p className="text-white/30 uppercase tracking-[0.5em] text-xs">The vault is currently sealed.</p>
+                <p className="text-white/30 uppercase tracking-[0.5em] text-xs font-light">The vault is currently sealed.</p>
             </div>
         );
     }
 
     return (
-        <div id="shop" className="px-6 py-24 max-w-7xl mx-auto">
+        <div id="shop" className="max-w-7xl mx-auto">
             <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
                 <div className="space-y-4">
                     <p className="text-gold uppercase tracking-[0.4em] text-[10px] font-light">Curated Selection</p>
@@ -46,7 +71,7 @@ export async function ProductGrid() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-20">
-                {typedProducts.map((product: Product) => (
+                {products.map((product: Product) => (
                     <ProductCard
                         key={product.id}
                         product={product}

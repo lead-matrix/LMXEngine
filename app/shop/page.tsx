@@ -1,14 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
+"use client";
+
 import { ProductGrid } from "@/components/ProductGrid";
-import { ArrowRight, Sparkles, Filter } from "lucide-react";
-import Link from "next/link";
+import { Sparkles, Filter } from "lucide-react";
 
-export const metadata = {
-    title: "The Boutique | DINA COSMETIC",
-    description: "Explore the full collection of luxury cosmetics from the Obsidian Palace.",
-};
-
-export default async function ShopPage() {
+export default function ShopPage() {
     return (
         <div className="bg-black text-white min-h-screen pt-32">
             <div className="px-6 max-w-7xl mx-auto space-y-16">
