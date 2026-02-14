@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase-client";
+import { createClient } from "@/lib/supabase/client";
+
+const supabase = createClient();
 import { Package, Truck, ExternalLink, CheckCircle2, Loader2 } from "lucide-react";
 import { fulfillOrder } from "@/lib/actions/admin";
 import { toast } from "sonner";

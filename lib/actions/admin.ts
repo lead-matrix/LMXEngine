@@ -1,6 +1,6 @@
 'use server'
 
-import { createServerClient } from "@/lib/supabase-server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { createShippingLabel } from "@/lib/utils/shippo";
 import { sendShippingNotificationEmail } from "@/lib/utils/email";
@@ -8,7 +8,7 @@ import { redirect } from "next/navigation";
 
 // Helper to ensure the user is an admin
 async function ensureAdmin() {
-    const supabase = await createServerClient();
+    const supabase = await createAdminClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {

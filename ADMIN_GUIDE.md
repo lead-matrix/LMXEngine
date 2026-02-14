@@ -51,7 +51,7 @@ Welcome to the inner sanctum of **DINA COSMETIC**. This guide provides the proto
 
 ## 🛡️ Administrative Security
 - Access is restricted to accounts with **Admin Clearance** in the Supabase `profiles` table.
-- All rituals are performed at the **Edge** via unified security protocols (`proxy.ts`).
+- All rituals are performed at the **Edge** via unified security protocols (`middleware.ts`).
 
 ---
 

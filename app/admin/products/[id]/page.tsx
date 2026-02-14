@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase-client";
+import { createClient } from "@/lib/supabase/client";
+
+const supabase = createClient();
 import { ProductForm } from "@/components/admin/ProductForm";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";

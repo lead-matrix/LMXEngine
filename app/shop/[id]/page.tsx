@@ -1,4 +1,5 @@
-import { createServerClient } from "@/lib/supabase-server";
+import { createClient } from "@/lib/supabase/server";
+import { createClient as createPublicClient } from "@/lib/supabase/public";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { ProductActions } from "./ProductActions";
@@ -7,15 +8,24 @@ import { ArrowLeft, Share2 } from "lucide-react";
 import Image from "next/image";
 import { cookies } from "next/headers";
 
-export const dynamic = "force-dynamic";
-
 interface PageProps {
     params: Promise<{ id: string }>;
 }
 
+export async function generateStaticParams() {
+    const supabase = createPublicClient();
+    const { data: products } = await supabase
+        .from("products")
+        .select("id");
+
+    return products?.map((product: { id: string }) => ({
+        id: product.id,
+    })) || [];
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { id } = await params;
-    const supabase = await createServerClient();
+    const supabase = await createClient();
     const { data: product } = await supabase
         .from("products")
         .select("name, description")
@@ -37,7 +47,7 @@ export default async function ProductPage({ params }: PageProps) {
     // Access cookies to ensure request-time context
     await cookies();
 
-    const supabase = await createServerClient();
+    const supabase = await createClient();
 
     const { data: product, error } = await supabase
         .from('products')

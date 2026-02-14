@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase-client";
+import { createClient } from "@/lib/supabase/client";
+
+const supabase = createClient();
 import { Plus, Pencil, Trash2, ExternalLink, Package, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { deleteProduct } from "@/lib/actions/admin";

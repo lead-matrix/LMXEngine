@@ -1,6 +1,7 @@
 "use client";
 
-import { supabase } from "@/lib/supabase-client";
+import { createClient } from "@/lib/supabase/client";
+const supabase = createClient();
 import { Settings as SettingsIcon, Globe, CreditCard, Bell, ShieldCheck } from "lucide-react";
 
 export default function AdminSettings() {
