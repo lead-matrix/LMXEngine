@@ -1,5 +1,5 @@
-import { createServerClient } from "@/lib/supabase/server";
-import { createClient as createPublicClient } from "@/lib/supabase/public";
+import { createClient } from "@/utils/supabase/server";
+import { createClient as createPublicClient } from "@/utils/supabase/client";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { ProductActions } from "./ProductActions";

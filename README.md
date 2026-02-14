@@ -53,7 +53,7 @@ Deploy to Vercel and ensure all environment variables are added to the Vercel pr
 ## Project Structure
 - `/app`: Main application routes (Storefront & `/admin`).
 - `/components`: Shared UI components.
-- `/lib/supabase`: Supabase kitchen & server clients.
+- `/utils/supabase`: Supabase client factories (server, client, admin, middleware).
 - `/lib/actions`: Server actions for admin & user mutations.
 - `/context`: Global state (Cart, etc.).
 - `supabase-migration.sql`: Main database schema.

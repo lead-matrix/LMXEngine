@@ -1,6 +1,6 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/utils/supabase/client";
 import { ProductForm } from "@/components/admin/ProductForm";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";

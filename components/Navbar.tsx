@@ -6,7 +6,7 @@ import { useCart } from "@/context/CartContext";
 import Image from "next/image";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/utils/supabase/client";
 
 export function Navbar() {
     const { totalItems, setIsCartOpen } = useCart();

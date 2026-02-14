@@ -1,6 +1,6 @@
 'use server'
 
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient } from "@/utils/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { createShippingLabel } from "@/lib/utils/shippo";
 import { sendShippingNotificationEmail } from "@/lib/utils/email";

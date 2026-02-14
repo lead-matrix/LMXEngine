@@ -5,7 +5,7 @@ import { ArrowRight, Search, X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/utils/supabase/client";
 
 export function Hero() {
     const [isSearchOpen, setIsSearchOpen] = useState(false);

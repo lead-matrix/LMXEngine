@@ -1,7 +1,7 @@
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { supabaseAdmin } from '@/utils/supabase/admin';
 import { sendOrderConfirmationEmail } from '@/lib/utils/email';
 
 export const dynamic = 'force-dynamic';
@@ -58,7 +58,8 @@ export async function POST(req: Request) {
 async function handleOneTimePayment(session: Stripe.Checkout.Session) {
     if (!session.metadata?.orderId) return;
 
-    await supabaseAdmin
+    const supabase = await supabaseAdmin();
+    await supabase
         .from('orders')
         .update({
             status: 'paid',
@@ -80,7 +81,7 @@ async function handleOneTimePayment(session: Stripe.Checkout.Session) {
     }
 
     // Handle stock decrement
-    const { data: items } = await supabaseAdmin
+    const { data: items } = await supabase
         .from("order_items")
         .select("product_id, quantity, variant_id")
         .eq("order_id", session.metadata.orderId);
@@ -88,12 +89,12 @@ async function handleOneTimePayment(session: Stripe.Checkout.Session) {
     if (items) {
         for (const item of items) {
             if (item.variant_id) {
-                await supabaseAdmin.rpc('decrement_variant_stock', {
+                await supabase.rpc('decrement_variant_stock', {
                     v_id: item.variant_id,
                     amount: item.quantity
                 });
             } else {
-                await supabaseAdmin.rpc('decrement_product_stock', {
+                await supabase.rpc('decrement_product_stock', {
                     p_id: item.product_id,
                     amount: item.quantity
                 });
