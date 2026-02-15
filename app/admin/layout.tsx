@@ -1,5 +1,6 @@
-import { redirect } from "next/navigation"
-import { createClient } from "@/utils/supabase/server"
+import { redirect } from "next/navigation";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 import AdminLayoutClient from "@/components/admin/AdminLayoutClient";
 
 export const dynamic = "force-dynamic";
@@ -14,22 +15,36 @@ export const metadata = {
 export default async function AdminLayout({
     children,
 }: {
-    children: React.ReactNode
+    children: React.ReactNode;
 }) {
-    const supabase = await createClient()
+    const cookieStore = await cookies();
 
-    const { data: { user } } = await supabase.auth.getUser()
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                get(name: string) {
+                    return cookieStore.get(name)?.value;
+                },
+            },
+        }
+    );
 
-    if (!user) redirect("/login")
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) redirect("/login");
 
     const { data: profile } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", user.id)
-        .single()
+        .single();
 
     if (!profile || profile.role !== "admin") {
-        redirect("/")
+        redirect("/");
     }
 
     return <AdminLayoutClient>{children}</AdminLayoutClient>;

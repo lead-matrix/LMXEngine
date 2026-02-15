@@ -72,8 +72,12 @@ export async function updateProduct(formData: FormData) {
         await supabase.from('variants').insert(variantData);
     }
 
+    // Revalidate all pages that might display this product
     revalidatePath('/admin/products');
     revalidatePath(`/shop/${id}`);
+    revalidatePath('/shop');
+    revalidatePath('/collections');
+    revalidatePath('/');
 }
 
 export async function createProduct(formData: FormData) {
@@ -117,7 +121,11 @@ export async function createProduct(formData: FormData) {
         await supabase.from('variants').insert(variantData);
     }
 
+    // Revalidate all pages that might display products
     revalidatePath('/admin/products');
+    revalidatePath('/shop');
+    revalidatePath('/collections');
+    revalidatePath('/');
     return product;
 }
 
@@ -127,7 +135,11 @@ export async function deleteProduct(id: string) {
 
     if (error) throw new Error(error.message);
 
+    // Revalidate all pages that might have displayed this product
     revalidatePath('/admin/products');
+    revalidatePath('/shop');
+    revalidatePath('/collections');
+    revalidatePath('/');
 }
 
 export async function fulfillOrder(orderId: string) {

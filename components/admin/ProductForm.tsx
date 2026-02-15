@@ -4,12 +4,13 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createProduct, updateProduct } from '@/lib/actions/admin'
 import VariantsManager from './VariantsManager'
+import { ImageUpload } from './ImageUpload'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
-import { Loader2, Plus, X, Image as ImageIcon } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 interface ProductFormProps {
     product?: any
@@ -19,7 +20,6 @@ export function ProductForm({ product }: ProductFormProps) {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
     const [images, setImages] = useState<string[]>(product?.images || [])
-    const [newImageUrl, setNewImageUrl] = useState('')
 
     async function handleSubmit(formData: FormData) {
         setLoading(true)
@@ -41,17 +41,6 @@ export function ProductForm({ product }: ProductFormProps) {
         } finally {
             setLoading(false)
         }
-    }
-
-    const addImage = () => {
-        if (newImageUrl && !images.includes(newImageUrl)) {
-            setImages([...images, newImageUrl])
-            setNewImageUrl('')
-        }
-    }
-
-    const removeImage = (url: string) => {
-        setImages(images.filter(img => img !== url))
     }
 
     return (
@@ -112,43 +101,12 @@ export function ProductForm({ product }: ProductFormProps) {
                     </div>
 
                     <div className="space-y-4">
-                        <Label className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Visual Gallery (URLS)</Label>
-                        <div className="flex gap-2">
-                            <Input
-                                value={newImageUrl}
-                                onChange={(e) => setNewImageUrl(e.target.value)}
-                                placeholder="https://..."
-                                className="bg-black border-gold/20 rounded-none focus-visible:ring-gold text-white placeholder:text-zinc-700 h-10"
-                            />
-                            <Button
-                                type="button"
-                                onClick={addImage}
-                                className="bg-zinc-800 hover:bg-zinc-700 text-gold rounded-none"
-                            >
-                                <Plus size={16} />
-                            </Button>
-                        </div>
-
-                        <div className="grid grid-cols-4 gap-4 mt-2">
-                            {images.map((url, i) => (
-                                <div key={i} className="relative group aspect-square bg-zinc-900 border border-gold/10">
-                                    <img src={url} alt="product" className="w-full h-full object-cover" />
-                                    <button
-                                        type="button"
-                                        onClick={() => removeImage(url)}
-                                        className="absolute -top-1 -right-1 bg-rose-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                    >
-                                        <X size={10} />
-                                    </button>
-                                </div>
-                            ))}
-                            {images.length === 0 && (
-                                <div className="col-span-4 py-8 border border-dashed border-zinc-800 flex flex-col items-center justify-center text-zinc-600">
-                                    <ImageIcon size={24} className="mb-2 opacity-20" />
-                                    <span className="text-[8px] uppercase tracking-widest">Gallery Empty</span>
-                                </div>
-                            )}
-                        </div>
+                        <Label className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">Visual Gallery</Label>
+                        <ImageUpload
+                            images={images}
+                            onImagesChange={setImages}
+                            maxImages={10}
+                        />
                     </div>
                 </div>
             </div>
