@@ -15,6 +15,21 @@ export function Navbar() {
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState<any[]>([]);
     const supabase = createClient();
+    const [user, setUser] = useState<any>(null);
+
+    useEffect(() => {
+        const getUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setUser(user);
+        };
+        getUser();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setUser(session?.user ?? null);
+        });
+
+        return () => subscription.unsubscribe();
+    }, []);
 
     useEffect(() => {
         const fetchResults = async () => {
@@ -110,9 +125,11 @@ export function Navbar() {
                     >
                         <Search className="w-5 h-5" />
                     </button>
-                    <Link href="/admin" className="hidden sm:block text-white/70 hover:text-gold transition-colors p-2">
+
+                    <Link href={user ? "/account" : "/login"} className="hidden sm:block text-white/70 hover:text-gold transition-colors p-2" title={user ? "My Account" : "Sign In"}>
                         <User className="w-5 h-5" />
                     </Link>
+
                     <button
                         onClick={() => setIsCartOpen(true)}
                         className="relative text-white/70 hover:text-gold transition-colors p-2"

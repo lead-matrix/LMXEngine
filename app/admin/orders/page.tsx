@@ -13,12 +13,15 @@ interface Order {
     status: string;
     created_at: string;
     total_amount: number;
+    tracking_number?: string;
+    shipping_label_url?: string;
     profiles: {
         email: string;
     } | null;
     shipping_address: any;
     metadata: any;
 }
+
 
 export default function AdminOrders() {
     const [orders, setOrders] = useState<Order[]>([]);
@@ -46,15 +49,24 @@ export default function AdminOrders() {
     const handleFulfill = async (orderId: string) => {
         setActionLoading(orderId);
         try {
-            await fulfillOrder(orderId);
+            const response = await fetch('/api/admin/generate-label', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) throw new Error(data.error);
+
             toast.success("Manifestation Dispatched", {
-                description: "The artifacts are now en route to the client.",
+                description: `Tracking: ${data.tracking_number}`,
                 style: { background: '#000', color: '#D4AF37', border: '1px solid #D4AF37' }
             });
             await fetchOrders(); // Refresh status
-        } catch (error) {
+        } catch (error: any) {
             toast.error("Logistics Failure", {
-                description: "The ritual was interrupted. Please check the logs."
+                description: error.message || "The ritual was interrupted."
             });
         } finally {
             setActionLoading(null);
@@ -114,6 +126,7 @@ export default function AdminOrders() {
 
                         {/* Action */}
                         <div className="flex items-center gap-3">
+
                             {order.status === 'paid' && (
                                 <button
                                     onClick={() => handleFulfill(order.id)}
@@ -121,23 +134,26 @@ export default function AdminOrders() {
                                     className="flex items-center gap-2 bg-gold text-black px-6 py-3 text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-white transition-all disabled:opacity-50"
                                 >
                                     {actionLoading === order.id ? <Loader2 size={14} className="animate-spin" /> : <Package size={14} />}
-                                    Fulfill Order
+                                    Generate Label
                                 </button>
                             )}
                             {order.status === 'shipped' && (
-                                <div className="flex flex-col gap-2">
+                                <div className="flex flex-col gap-2 items-end">
                                     <span className="text-[9px] uppercase tracking-widest text-emerald-500 flex items-center gap-1 font-bold">
                                         <CheckCircle2 size={12} />
                                         Dispatched
                                     </span>
-                                    {order.metadata?.shipping_label_url && (
+                                    {order.tracking_number && (
+                                        <span className="text-[9px] font-mono text-zinc-500">{order.tracking_number}</span>
+                                    )}
+                                    {order.shipping_label_url && (
                                         <a
-                                            href={order.metadata.shipping_label_url}
+                                            href={order.shipping_label_url}
                                             target="_blank"
-                                            className="text-[9px] uppercase tracking-widest text-zinc-500 hover:text-white flex items-center gap-1 transition-colors"
+                                            className="text-[9px] uppercase tracking-widest text-gold hover:text-white flex items-center gap-1 transition-colors border-b border-gold/30 hover:border-white"
                                         >
-                                            <ExternalLink size={12} />
-                                            View Label
+                                            <ExternalLink size={10} />
+                                            Print Label
                                         </a>
                                     )}
                                 </div>

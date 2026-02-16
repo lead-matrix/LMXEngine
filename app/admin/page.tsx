@@ -26,6 +26,9 @@ interface DashboardStats {
     productsCount: number;
     ordersCount: number;
     totalRevenue: number;
+    pendingOrders: number;
+    shippedOrders: number;
+    lowStock: number;
     recentOrders: RecentOrder[];
 }
 
@@ -39,15 +42,27 @@ export default function AdminDashboard() {
 
             try {
                 // Fetch Stats in parallel
+                const startDate = new Date();
+                startDate.setDate(startDate.getDate() - 30); // 30 days ago
+
                 const [
-                    { count: pCount },
-                    { count: oCount },
-                    { data: revenueData },
-                    { data: oData }
+                    { count: pCount }, // Total Products
+                    { count: oCount }, // Total Orders
+                    { data: revenueData }, // Revenue (30 days)
+                    { count: pendingCount }, // Pending Orders
+                    { count: shippedCount }, // Shipped Orders
+                    { count: lowStockCount }, // Low Stock
+                    { data: oData } // Recent Orders
                 ] = await Promise.all([
                     supabase.from('products').select('*', { count: 'exact', head: true }),
                     supabase.from('orders').select('*', { count: 'exact', head: true }),
-                    supabase.from('orders').select('total_amount').eq('status', 'paid'),
+                    supabase.from('orders')
+                        .select('total_amount')
+                        .in('status', ['paid', 'shipped', 'delivered'])
+                        .gt('created_at', startDate.toISOString()),
+                    supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'paid'),
+                    supabase.from('orders').select('*', { count: 'exact', head: true }).eq('status', 'shipped'),
+                    supabase.from('products').select('*', { count: 'exact', head: true }).lt('stock', 5),
                     supabase.from('orders')
                         .select('id, total_amount, status, created_at, profiles(email)')
                         .order('created_at', { ascending: false })
@@ -60,6 +75,9 @@ export default function AdminDashboard() {
                     productsCount: pCount || 0,
                     ordersCount: oCount || 0,
                     totalRevenue: revenue,
+                    pendingOrders: pendingCount || 0,
+                    shippedOrders: shippedCount || 0,
+                    lowStock: lowStockCount || 0,
                     recentOrders: (oData as any[]) || []
                 });
             } catch (error) {
@@ -91,28 +109,28 @@ export default function AdminDashboard() {
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard
-                    label="Total Revenue"
+                    label="Total Revenue (30d)"
                     value={`$${stats?.totalRevenue.toLocaleString()}`}
                     icon={<TrendingUp className="text-emerald-500" />}
                     sub="Gross Manifestations"
                 />
                 <StatCard
-                    label="Active Orders"
-                    value={stats?.ordersCount.toString() || "0"}
+                    label="Pending Orders"
+                    value={stats?.pendingOrders.toString() || "0"}
                     icon={<ShoppingBag className="text-gold" />}
-                    sub="Current Acquisitions"
+                    sub="Awaiting Fulfillment"
                 />
                 <StatCard
-                    label="Palace Residents"
-                    value={"1.2k"}
+                    label="Dispatched"
+                    value={stats?.shippedOrders.toString() || "0"}
                     icon={<Users className="text-blue-500" />}
-                    sub="Loyal Clientele"
+                    sub="En Route"
                 />
                 <StatCard
-                    label="Live Artifacts"
-                    value={stats?.productsCount.toString() || "0"}
-                    icon={<AlertCircle className="text-gold/50" />}
-                    sub="Active Inventory"
+                    label="Low Stock Alerts"
+                    value={stats?.lowStock.toString() || "0"}
+                    icon={<AlertCircle className="text-red-500" />}
+                    sub="Replenish Immediately"
                 />
             </div>
 

@@ -97,6 +97,34 @@ export async function proxy(request: NextRequest) {
         return NextResponse.redirect(new URL('/', request.url))
     }
 
+    // 4. Kill Switch (Store Enabled Check)
+    // Skip for admin routes and api routes to allow admins to re-enable
+    if (!request.nextUrl.pathname.startsWith('/admin') && !request.nextUrl.pathname.startsWith('/api') && !request.nextUrl.pathname.startsWith('/login') && !request.nextUrl.pathname.startsWith('/_next')) {
+        const { data: settings } = await supabase
+            .from('system_settings')
+            .select('value')
+            .eq('key', 'store_enabled')
+            .single();
+
+        // Default to true if setting missing (fail open or closed? Safe to fail open for now unless strict req)
+        // Directive says "Middleware must block checkout if false".
+        // Let's block everything if false, or just checkout?
+        // "Middleware must block checkout if false." -> implied maybe just checkout?
+        // But "Emergency Store Kill Switch" usually implies whole site maintenance mode.
+        // Let's implement Maintenance Mode page redirect if false.
+
+        if (settings && settings.value === false) {
+            // Allow viewing home page? Or full block?
+            // Let's block checkout specifically as requested, or maybe maintenance page.
+            // If we block everything, we need a maintenance page.
+            // For now, let's block /checkout, /cart, /account
+            const protectedPaths = ['/checkout', '/cart', '/account', '/products'];
+            if (protectedPaths.some(path => request.nextUrl.pathname.startsWith(path))) {
+                return NextResponse.redirect(new URL('/maintenance', request.url));
+            }
+        }
+    }
+
     return response
 }
 
@@ -113,4 +141,3 @@ export const config = {
     ],
 }
 
-export default proxy;

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { createClient } from "@/utils/supabase/client";
 import {
     LayoutDashboard,
     Package,
@@ -9,7 +10,10 @@ import {
     Settings,
     ChevronRight,
     Menu,
-    ChevronLeft
+    ChevronLeft,
+    Palette,
+    FileText,
+    LogOut
 } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/components/ui/sheet";
@@ -23,39 +27,61 @@ export default function AdminLayoutClient({
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const SidebarContent = () => (
-        <div className="flex flex-col h-full font-sans">
-            <div className="px-6 py-12 border-b border-gold/10 bg-zinc-950/30">
-                <div className="flex items-center gap-3 mb-6">
-                    <div className="relative w-8 h-8">
-                        <Image src="/logo.jpg" alt="Admin Logo" fill className="object-contain" />
+        <div className="flex flex-col h-full font-sans bg-black border-r border-gold/10">
+            <div className="px-6 py-8 border-b border-gold/10 bg-zinc-950/30">
+                <div className="flex items-center gap-3">
+                    <div className="relative w-8 h-8 rounded-full border border-gold/20 overflow-hidden bg-black flex items-center justify-center">
+                        <span className="font-serif text-gold text-xs">OP</span>
                     </div>
                     <div>
-                        <h1 className="text-xl font-serif tracking-widest text-gold uppercase">
-                            Admin Palace
+                        <h1 className="text-sm font-serif tracking-widest text-gold uppercase">
+                            Obsidian Palace
                         </h1>
-                        <p className="text-[8px] text-zinc-500 tracking-[0.3em] font-light">
+                        <p className="text-[8px] text-zinc-500 tracking-[0.3em] font-light mt-1">
                             SUPREME MANAGEMENT
                         </p>
                     </div>
                 </div>
             </div>
 
-            <nav className="flex-grow px-2 py-8 space-y-1">
-                <AdminNavLink href="/admin" onClick={() => setIsMobileMenuOpen(false)} icon={<LayoutDashboard size={18} />} label="Dashboard" />
-                <AdminNavLink href="/admin/products" onClick={() => setIsMobileMenuOpen(false)} icon={<Package size={18} />} label="Products" />
-                <AdminNavLink href="/admin/orders" onClick={() => setIsMobileMenuOpen(false)} icon={<ShoppingCart size={18} />} label="Orders" />
-                <AdminNavLink href="/admin/users" onClick={() => setIsMobileMenuOpen(false)} icon={<Users size={18} />} label="Customers" />
-                <AdminNavLink href="/admin/settings" onClick={() => setIsMobileMenuOpen(false)} icon={<Settings size={18} />} label="Settings" />
+            <nav className="flex-grow py-6 space-y-1 overflow-y-auto">
+                <div className="px-6 mb-2">
+                    <span className="text-[8px] uppercase tracking-[0.3em] text-zinc-700 font-bold">Main</span>
+                </div>
+                <AdminNavLink href="/admin" onClick={() => setIsMobileMenuOpen(false)} icon={<LayoutDashboard size={16} />} label="Overview" />
+                <AdminNavLink href="/admin/products" onClick={() => setIsMobileMenuOpen(false)} icon={<Package size={16} />} label="Products" />
+                <AdminNavLink href="/admin/orders" onClick={() => setIsMobileMenuOpen(false)} icon={<ShoppingCart size={16} />} label="Fulfillment" />
+                <AdminNavLink href="/admin/users" onClick={() => setIsMobileMenuOpen(false)} icon={<Users size={16} />} label="Clientele" />
+
+                <div className="pt-6 mt-2">
+                    <div className="px-6 mb-2">
+                        <span className="text-[8px] uppercase tracking-[0.3em] text-zinc-700 font-bold">Master Controls</span>
+                    </div>
+                    <AdminNavLink href="/admin/frontend" onClick={() => setIsMobileMenuOpen(false)} icon={<Palette size={16} />} label="Frontend" />
+                    <AdminNavLink href="/admin/pages" onClick={() => setIsMobileMenuOpen(false)} icon={<FileText size={16} />} label="Pages" />
+                    <AdminNavLink href="/admin/settings" onClick={() => setIsMobileMenuOpen(false)} icon={<Settings size={16} />} label="System" />
+                </div>
             </nav>
 
-            <div className="p-4 border-t border-gold/10">
+            <div className="p-4 border-t border-gold/10 bg-zinc-950/50">
                 <Link
                     href="/"
-                    className="flex items-center gap-3 px-4 py-4 text-[10px] uppercase tracking-widest text-zinc-500 hover:text-white hover:bg-white/5 transition-all group"
+                    className="flex items-center gap-3 mb-2 px-4 py-3 text-[9px] uppercase tracking-widest text-zinc-500 hover:text-white hover:bg-white/5 rounded-sm transition-all group"
                 >
-                    <ChevronLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
-                    Teleport To Store
+                    <ChevronLeft size={12} className="group-hover:-translate-x-1 transition-transform" />
+                    View Storefront
                 </Link>
+                <button
+                    onClick={async () => {
+                        const supabase = createClient();
+                        await supabase.auth.signOut();
+                        window.location.href = "/";
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-[9px] uppercase tracking-widest text-red-500/70 hover:text-red-400 hover:bg-red-500/10 rounded-sm transition-all group"
+                >
+                    <LogOut size={12} />
+                    Disconnect
+                </button>
             </div>
         </div>
     );
