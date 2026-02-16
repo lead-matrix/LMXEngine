@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from 'next/server'
  * Obsidian Palace Proxy (Next.js 16+)
  * Unified security and routing layer at the Edge.
  */
-export async function proxy(request: NextRequest) {
+export default async function middleware(request: NextRequest) {
     let response = NextResponse.next({
         request: {
             headers: request.headers,

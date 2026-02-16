@@ -30,7 +30,7 @@ export async function updateFrontendContent(
 
     // Revalidate all paths to show changes immediately
     revalidatePath("/", "layout");
-    revalidateTag("frontend-content");
+    // revalidateTag("frontend-content");
 
     return { success: true, data };
 }
@@ -91,7 +91,7 @@ export async function createFrontendContent(
     }
 
     revalidatePath("/", "layout");
-    revalidateTag("frontend-content");
+    // revalidateTag("frontend-content");
 
     return { success: true, data };
 }
@@ -110,7 +110,7 @@ export async function deleteFrontendContent(contentKey: string) {
     }
 
     revalidatePath("/", "layout");
-    revalidateTag("frontend-content");
+    // revalidateTag("frontend-content");
 
     return { success: true };
 }
@@ -138,7 +138,7 @@ export async function updateNavigationMenu(menuKey: string, menuItems: any) {
     }
 
     revalidatePath("/", "layout");
-    revalidateTag("navigation");
+    // revalidateTag("navigation");
 
     return { success: true, data };
 }
@@ -200,7 +200,7 @@ export async function updatePage(slug: string, pageData: any) {
 
     revalidatePath(`/${slug}`);
     revalidatePath("/", "layout");
-    revalidateTag("pages");
+    // revalidateTag("pages");
 
     return { success: true, data };
 }
@@ -253,7 +253,7 @@ export async function createPage(pageData: any) {
     }
 
     revalidatePath("/", "layout");
-    revalidateTag("pages");
+    // revalidateTag("pages");
 
     return { success: true, data };
 }
@@ -269,7 +269,7 @@ export async function deletePage(slug: string) {
     }
 
     revalidatePath("/", "layout");
-    revalidateTag("pages");
+    // revalidateTag("pages");
 
     return { success: true };
 }
@@ -297,7 +297,7 @@ export async function updateThemeSettings(themeKey: string, settings: any) {
     }
 
     revalidatePath("/", "layout");
-    revalidateTag("theme");
+    // revalidateTag("theme");
 
     return { success: true, data };
 }
@@ -355,7 +355,7 @@ export async function activateTheme(themeKey: string) {
     }
 
     revalidatePath("/", "layout");
-    revalidateTag("theme");
+    // revalidateTag("theme");
 
     return { success: true, data };
 }
@@ -383,7 +383,7 @@ export async function updateSiteSettings(settingKey: string, settingValue: any) 
     }
 
     revalidatePath("/", "layout");
-    revalidateTag("site-settings");
+    // revalidateTag("site-settings");
 
     return { success: true, data };
 }
