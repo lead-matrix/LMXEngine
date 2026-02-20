@@ -10,6 +10,7 @@ import { createClient } from "@/utils/supabase/client";
 export function Hero() {
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+    const [searchResults, setSearchResults] = useState<any[]>([]);
     const [heroData, setHeroData] = useState<any>(null);
     const supabase = createClient();
 
