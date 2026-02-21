@@ -1,430 +1,105 @@
-"use client";
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+import { Save, ShieldCheck, Globe, CreditCard, Bell } from 'lucide-react'
 
-import { useState, useEffect } from "react";
-import { createClient } from "@/utils/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Save, Loader2, Plus, Trash2, ExternalLink } from "lucide-react";
-
-interface SocialLinks {
-    facebook: string;
-    instagram: string;
-    twitter: string;
-    tiktok: string;
-    youtube: string;
-}
-
-interface ContactInfo {
-    email: string;
-    phone: string;
-    address: string;
-    hours: string;
-}
-
-interface StoreInfo {
-    name: string;
-    tagline: string;
-    description: string;
-    logo_url: string;
-}
-
-interface FooterLink {
-    text: string;
-    url: string;
-}
-
-interface FooterColumn {
-    title: string;
-    links: FooterLink[];
-}
-
-interface FooterLinks {
-    columns: FooterColumn[];
-}
-
-export default function AdminSettingsPage() {
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-    const [success, setSuccess] = useState(false);
-
-    const [storeInfo, setStoreInfo] = useState<StoreInfo>({
-        name: "",
-        tagline: "",
-        description: "",
-        logo_url: "",
-    });
-
-    const [contactInfo, setContactInfo] = useState<ContactInfo>({
-        email: "",
-        phone: "",
-        address: "",
-        hours: "",
-    });
-
-    const [socialLinks, setSocialLinks] = useState<SocialLinks>({
-        facebook: "",
-        instagram: "",
-        twitter: "",
-        tiktok: "",
-        youtube: "",
-    });
-
-    const [footerLinks, setFooterLinks] = useState<FooterLinks>({
-        columns: [],
-    });
-
-    const supabase = createClient();
-
-    useEffect(() => {
-        loadSettings();
-    }, []);
-
-    const loadSettings = async () => {
-        setLoading(true);
-
-        const { data, error } = await supabase
-            .from("site_settings")
-            .select("*");
-
-        if (data) {
-            data.forEach((setting) => {
-                switch (setting.setting_key) {
-                    case "store_info":
-                        setStoreInfo(setting.setting_value as StoreInfo);
-                        break;
-                    case "contact_info":
-                        setContactInfo(setting.setting_value as ContactInfo);
-                        break;
-                    case "social_links":
-                        setSocialLinks(setting.setting_value as SocialLinks);
-                        break;
-                    case "footer_links":
-                        setFooterLinks(setting.setting_value as FooterLinks);
-                        break;
-                }
-            });
+export default async function AdminSettings() {
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                get(name: string) {
+                    return cookieStore.get(name)?.value
+                },
+            },
         }
+    )
 
-        setLoading(false);
-    };
-
-    const saveSettings = async () => {
-        setSaving(true);
-        setSuccess(false);
-
-        try {
-            // Update all settings
-            await supabase
-                .from("site_settings")
-                .upsert([
-                    { setting_key: "store_info", setting_value: storeInfo },
-                    { setting_key: "contact_info", setting_value: contactInfo },
-                    { setting_key: "social_links", setting_value: socialLinks },
-                    { setting_key: "footer_links", setting_value: footerLinks },
-                ]);
-
-            setSuccess(true);
-            setTimeout(() => setSuccess(false), 3000);
-        } catch (error) {
-            console.error("Error saving settings:", error);
-        }
-
-        setSaving(false);
-    };
-
-    const addFooterColumn = () => {
-        setFooterLinks({
-            columns: [
-                ...footerLinks.columns,
-                { title: "New Section", links: [] },
-            ],
-        });
-    };
-
-    const removeFooterColumn = (index: number) => {
-        setFooterLinks({
-            columns: footerLinks.columns.filter((_, i) => i !== index),
-        });
-    };
-
-    const updateColumnTitle = (index: number, title: string) => {
-        const newColumns = [...footerLinks.columns];
-        newColumns[index].title = title;
-        setFooterLinks({ columns: newColumns });
-    };
-
-    const addLink = (columnIndex: number) => {
-        const newColumns = [...footerLinks.columns];
-        newColumns[columnIndex].links.push({ text: "New Link", url: "/" });
-        setFooterLinks({ columns: newColumns });
-    };
-
-    const removeLink = (columnIndex: number, linkIndex: number) => {
-        const newColumns = [...footerLinks.columns];
-        newColumns[columnIndex].links = newColumns[columnIndex].links.filter((_, i) => i !== linkIndex);
-        setFooterLinks({ columns: newColumns });
-    };
-
-    const updateLink = (columnIndex: number, linkIndex: number, field: "text" | "url", value: string) => {
-        const newColumns = [...footerLinks.columns];
-        newColumns[columnIndex].links[linkIndex][field] = value;
-        setFooterLinks({ columns: newColumns });
-    };
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen bg-background-primary">
-                <Loader2 className="w-8 h-8 animate-spin text-gold-primary" />
-            </div>
-        );
-    }
+    const { data: storeInfo } = await supabase.from('site_settings').select('*').eq('setting_key', 'store_info').single()
 
     return (
-        <div className="p-8 max-w-6xl mx-auto space-y-12">
-            {/* Header */}
-            <div className="flex items-center justify-between">
+        <div className="space-y-12 pb-24">
+            <div className="flex items-end justify-between">
                 <div>
-                    <h1 className="text-3xl font-serif text-text-headingDark">Store Settings</h1>
-                    <p className="text-sm text-text-mutedDark mt-2">Manage your store information, contact details, and footer content</p>
+                    <h1 className="text-4xl font-serif text-white mb-2 italic tracking-tight">Configuration</h1>
+                    <p className="text-zinc-500 text-xs uppercase tracking-[0.4em] font-medium">System Control & Identity</p>
                 </div>
-                <Button
-                    onClick={saveSettings}
-                    disabled={saving}
-                    className="bg-gold-primary text-background-primary hover:bg-gold-hover"
-                >
-                    {saving ? (
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    ) : (
-                        <Save className="w-4 h-4 mr-2" />
-                    )}
-                    Save All Changes
-                </Button>
+                <button className="bg-gold text-black px-10 py-3 text-[11px] font-bold uppercase tracking-[0.2em] flex items-center gap-2 hover:bg-gold/90 transition-all active:scale-95 shadow-[0_0_20px_rgba(212,175,55,0.2)]">
+                    <Save className="w-4 h-4" />
+                    Save Changes
+                </button>
             </div>
 
-            {success && (
-                <div className="bg-green-500/10 border border-green-500/20 text-green-500 p-4 rounded">
-                    Settings saved successfully!
-                </div>
-            )}
-
-            {/* Store Information */}
-            <section className="bg-background-secondary/50 border border-gold-primary/10 p-8 space-y-6">
-                <h2 className="text-xl font-serif text-text-headingDark border-b border-gold-primary/10 pb-4">Store Information</h2>
-
-                <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                        <Label className="text-text-mutedDark">Store Name</Label>
-                        <Input
-                            value={storeInfo.name}
-                            onChange={(e) => setStoreInfo({ ...storeInfo, name: e.target.value })}
-                            className="bg-background-primary/50 border-gold-primary/10 text-text-bodyDark"
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label className="text-text-mutedDark">Tagline</Label>
-                        <Input
-                            value={storeInfo.tagline}
-                            onChange={(e) => setStoreInfo({ ...storeInfo, tagline: e.target.value })}
-                            className="bg-background-primary/50 border-gold-primary/10 text-text-bodyDark"
-                        />
-                    </div>
-                </div>
-
-                <div className="space-y-2">
-                    <Label className="text-text-mutedDark">Description</Label>
-                    <Textarea
-                        value={storeInfo.description}
-                        onChange={(e) => setStoreInfo({ ...storeInfo, description: e.target.value })}
-                        className="bg-background-primary/50 border-gold-primary/10 text-text-bodyDark"
-                        rows={3}
-                    />
-                </div>
-
-                <div className="space-y-2">
-                    <Label className="text-text-mutedDark">Logo URL</Label>
-                    <Input
-                        value={storeInfo.logo_url}
-                        onChange={(e) => setStoreInfo({ ...storeInfo, logo_url: e.target.value })}
-                        className="bg-background-primary/50 border-gold-primary/10 text-text-bodyDark"
-                        placeholder="/logo.jpg"
-                    />
-                </div>
-            </section>
-
-            {/* Contact Information */}
-            <section className="bg-background-secondary/50 border border-gold-primary/10 p-8 space-y-6">
-                <h2 className="text-xl font-serif text-text-headingDark border-b border-gold-primary/10 pb-4">Contact Information</h2>
-
-                <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                        <Label className="text-text-mutedDark">Email</Label>
-                        <Input
-                            type="email"
-                            value={contactInfo.email}
-                            onChange={(e) => setContactInfo({ ...contactInfo, email: e.target.value })}
-                            className="bg-background-primary/50 border-gold-primary/10 text-text-bodyDark"
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label className="text-text-mutedDark">Phone</Label>
-                        <Input
-                            value={contactInfo.phone}
-                            onChange={(e) => setContactInfo({ ...contactInfo, phone: e.target.value })}
-                            className="bg-background-primary/50 border-gold-primary/10 text-text-bodyDark"
-                        />
-                    </div>
-                </div>
-
-                <div className="space-y-2">
-                    <Label className="text-text-mutedDark">Address</Label>
-                    <Input
-                        value={contactInfo.address}
-                        onChange={(e) => setContactInfo({ ...contactInfo, address: e.target.value })}
-                        className="bg-background-primary/50 border-gold-primary/10 text-text-bodyDark"
-                    />
-                </div>
-
-                <div className="space-y-2">
-                    <Label className="text-text-mutedDark">Business Hours</Label>
-                    <Input
-                        value={contactInfo.hours}
-                        onChange={(e) => setContactInfo({ ...contactInfo, hours: e.target.value })}
-                        className="bg-background-primary/50 border-gold-primary/10 text-text-bodyDark"
-                        placeholder="Monday - Friday: 9:00 AM - 6:00 PM"
-                    />
-                </div>
-            </section>
-
-            {/* Social Media Links */}
-            <section className="bg-background-secondary/50 border border-gold-primary/10 p-8 space-y-6">
-                <h2 className="text-xl font-serif text-text-headingDark border-b border-gold-primary/10 pb-4">Social Media Links</h2>
-
-                <div className="grid grid-cols-2 gap-6">
-                    {Object.entries(socialLinks).map(([platform, url]) => (
-                        <div key={platform} className="space-y-2">
-                            <Label className="text-white/60 capitalize">{platform}</Label>
-                            <div className="flex gap-2">
-                                <Input
-                                    value={url}
-                                    onChange={(e) => setSocialLinks({ ...socialLinks, [platform]: e.target.value })}
-                                    className="bg-background-primary/50 border-gold-primary/10 text-text-bodyDark"
-                                    placeholder={`https://${platform}.com/yourpage`}
-                                />
-                                {url && (
-                                    <Button
-                                        variant="outline"
-                                        size="icon"
-                                        onClick={() => window.open(url, "_blank")}
-                                        className="border-gold-primary/10 text-gold-primary hover:bg-gold-primary/10"
-                                    >
-                                        <ExternalLink className="w-4 h-4" />
-                                    </Button>
-                                )}
-                            </div>
-                        </div>
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
+                {/* Navigation */}
+                <div className="lg:col-span-1 space-y-4">
+                    {[
+                        { label: 'General Info', icon: Globe, active: true },
+                        { label: 'Security', icon: ShieldCheck },
+                        { label: 'Payments', icon: CreditCard },
+                        { label: 'Notifications', icon: Bell },
+                    ].map((item) => (
+                        <button key={item.label} className={`w-full flex items-center gap-4 px-6 py-4 border-l-2 transition-all ${item.active ? 'border-gold bg-white/5 text-gold' : 'border-transparent text-zinc-500 hover:text-white hover:bg-white/[0.02]'}`}>
+                            <item.icon className="w-4 h-4" />
+                            <span className="text-[10px] uppercase tracking-[0.2em] font-bold">{item.label}</span>
+                        </button>
                     ))}
                 </div>
-            </section>
 
-            {/* Footer Links */}
-            <section className="bg-background-secondary/50 border border-gold-primary/10 p-8 space-y-6">
-                <div className="flex items-center justify-between border-b border-gold-primary/10 pb-4">
-                    <h2 className="text-xl font-serif text-text-headingDark">Footer Links</h2>
-                    <Button
-                        onClick={addFooterColumn}
-                        variant="outline"
-                        size="sm"
-                        className="border-gold-primary text-gold-primary hover:bg-gold-primary hover:text-background-primary"
-                    >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Column
-                    </Button>
-                </div>
+                {/* Content */}
+                <div className="lg:col-span-3 space-y-12">
+                    {/* Store Section */}
+                    <section className="bg-zinc-950 border border-white/5 p-10 space-y-8">
+                        <h2 className="text-[10px] uppercase tracking-[0.4em] text-zinc-500 font-bold border-b border-white/5 pb-4">Brand Identity</h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {footerLinks.columns.map((column, columnIndex) => (
-                        <div key={columnIndex} className="bg-background-primary/30 border border-gold-primary/5 p-6 space-y-4">
-                            <div className="flex items-center justify-between">
-                                <Input
-                                    value={column.title}
-                                    onChange={(e) => updateColumnTitle(columnIndex, e.target.value)}
-                                    className="bg-background-primary/50 border-gold-primary/10 text-text-bodyDark font-serif"
-                                    placeholder="Column Title"
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-2">
+                                <label className="text-[9px] uppercase tracking-widest text-zinc-500 font-bold">Store Name</label>
+                                <input
+                                    type="text"
+                                    defaultValue={storeInfo?.setting_value?.name || 'DINA COSMETIC'}
+                                    className="w-full bg-zinc-900 border border-white/5 px-6 py-3 text-sm text-white focus:border-gold/50 outline-none transition-all placeholder:text-zinc-800"
                                 />
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => removeFooterColumn(columnIndex)}
-                                    className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </Button>
                             </div>
-
-                            <div className="space-y-3">
-                                {column.links.map((link, linkIndex) => (
-                                    <div key={linkIndex} className="space-y-2 p-3 bg-background-primary/30 border border-gold-primary/5">
-                                        <div className="flex items-center justify-between">
-                                            <Label className="text-text-mutedDark/40 text-xs">Link {linkIndex + 1}</Label>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => removeLink(columnIndex, linkIndex)}
-                                                className="h-6 w-6 text-red-500 hover:text-red-400"
-                                            >
-                                                <Trash2 className="w-3 h-3" />
-                                            </Button>
-                                        </div>
-                                        <Input
-                                            value={link.text}
-                                            onChange={(e) => updateLink(columnIndex, linkIndex, "text", e.target.value)}
-                                            className="bg-background-primary/50 border-gold-primary/10 text-text-bodyDark text-sm"
-                                            placeholder="Link Text"
-                                        />
-                                        <Input
-                                            value={link.url}
-                                            onChange={(e) => updateLink(columnIndex, linkIndex, "url", e.target.value)}
-                                            className="bg-background-primary/50 border-gold-primary/10 text-text-bodyDark text-sm"
-                                            placeholder="/page-url"
-                                        />
-                                    </div>
-                                ))}
+                            <div className="space-y-2">
+                                <label className="text-[9px] uppercase tracking-widest text-zinc-500 font-bold">Primary Currency</label>
+                                <select className="w-full bg-zinc-900 border border-white/5 px-6 py-3 text-sm text-white focus:border-gold/50 outline-none transition-all">
+                                    <option>USD ($)</option>
+                                    <option>EUR (€)</option>
+                                    <option>GBP (£)</option>
+                                </select>
                             </div>
-
-                            <Button
-                                onClick={() => addLink(columnIndex)}
-                                variant="outline"
-                                size="sm"
-                                className="w-full border-gold-primary/10 text-text-mutedDark hover:text-text-bodyDark"
-                            >
-                                <Plus className="w-3 h-3 mr-2" />
-                                Add Link
-                            </Button>
                         </div>
-                    ))}
-                </div>
-            </section>
 
-            {/* Save Button (Bottom) */}
-            <div className="flex justify-end">
-                <Button
-                    onClick={saveSettings}
-                    disabled={saving}
-                    className="bg-gold-primary text-background-primary hover:bg-gold-hover px-8"
-                    size="lg"
-                >
-                    {saving ? (
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    ) : (
-                        <Save className="w-4 h-4 mr-2" />
-                    )}
-                    Save All Changes
-                </Button>
+                        <div className="space-y-2">
+                            <label className="text-[9px] uppercase tracking-widest text-zinc-500 font-bold">Store Tagline</label>
+                            <input
+                                type="text"
+                                defaultValue={storeInfo?.setting_value?.tagline || 'Luxury Redefined'}
+                                className="w-full bg-zinc-900 border border-white/5 px-6 py-3 text-sm text-white focus:border-gold/50 outline-none transition-all"
+                            />
+                        </div>
+                    </section>
+
+                    {/* Infrastructure */}
+                    <section className="bg-zinc-950 border border-white/5 p-10 space-y-8">
+                        <h2 className="text-[10px] uppercase tracking-[0.4em] text-zinc-500 font-bold border-b border-white/5 pb-4">Infrastructure</h2>
+                        <div className="flex items-center justify-between p-6 bg-emerald-500/5 border border-emerald-500/10">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center">
+                                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                                </div>
+                                <div>
+                                    <p className="text-[11px] uppercase tracking-widest text-emerald-500 font-bold">System Status: Optimal</p>
+                                    <p className="text-[10px] text-emerald-500/60 mt-0.5">Stripe Webhooks & Supabase Engine Active</p>
+                                </div>
+                            </div>
+                            <button className="text-[9px] uppercase tracking-widest text-zinc-500 hover:text-white transition-colors">Run Diagnostics</button>
+                        </div>
+                    </section>
+                </div>
             </div>
         </div>
-    );
+    )
 }

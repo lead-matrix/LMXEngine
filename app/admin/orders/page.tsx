@@ -1,174 +1,92 @@
-"use client";
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+import { Eye, ExternalLink, PackageCheck } from 'lucide-react'
+import Link from 'next/link'
 
-import { useEffect, useState } from "react";
-import { createClient } from "@/utils/supabase/client";
-
-const supabase = createClient();
-import { Package, Truck, ExternalLink, CheckCircle2, Loader2 } from "lucide-react";
-import { fulfillOrder } from "@/lib/actions/admin";
-import { toast } from "sonner";
-
-interface Order {
-    id: string;
-    status: string;
-    created_at: string;
-    total_amount: number;
-    tracking_number?: string;
-    shipping_label_url?: string;
-    profiles: {
-        email: string;
-    } | null;
-    shipping_address: any;
-    metadata: any;
-}
-
-
-export default function AdminOrders() {
-    const [orders, setOrders] = useState<Order[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [actionLoading, setActionLoading] = useState<string | null>(null);
-
-    const fetchOrders = async () => {
-        const { data, error } = await supabase
-            .from('orders')
-            .select('*, profiles(email)')
-            .order('created_at', { ascending: false });
-
-        if (error) {
-            console.error("Error fetching orders:", error);
-        } else {
-            setOrders(data || []);
+export default async function AdminOrders() {
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+            cookies: {
+                get(name: string) {
+                    return cookieStore.get(name)?.value
+                },
+            },
         }
-        setLoading(false);
-    };
+    )
 
-    useEffect(() => {
-        fetchOrders();
-    }, []);
-
-    const handleFulfill = async (orderId: string) => {
-        setActionLoading(orderId);
-        try {
-            const response = await fetch('/api/admin/generate-label', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ orderId }),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) throw new Error(data.error);
-
-            toast.success("Manifestation Dispatched", {
-                description: `Tracking: ${data.tracking_number}`,
-                style: { background: '#000', color: '#D4AF37', border: '1px solid #D4AF37' }
-            });
-            await fetchOrders(); // Refresh status
-        } catch (error: any) {
-            toast.error("Logistics Failure", {
-                description: error.message || "The ritual was interrupted."
-            });
-        } finally {
-            setActionLoading(null);
-        }
-    };
-
-    if (loading) {
-        return (
-            <div className="h-[60vh] flex flex-col items-center justify-center space-y-4">
-                <Loader2 className="w-8 h-8 text-gold animate-spin" />
-                <p className="text-zinc-500 uppercase tracking-[0.3em] text-[10px]">Accessing Acquisition Vault...</p>
-            </div>
-        );
-    }
+    const { data: orders } = await supabase
+        .from('orders')
+        .select('id, customer_email, status, fulfillment_status, amount_total, created_at')
+        .order('created_at', { ascending: false })
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-700">
-            <div>
-                <h2 className="text-3xl font-serif text-gold mb-1">Acquisitions & Fulfillment</h2>
-                <p className="text-zinc-500 text-sm tracking-widest uppercase">Process luxury logistics</p>
+        <div className="space-y-12">
+            <div className="flex items-end justify-between">
+                <div>
+                    <h1 className="text-4xl font-serif text-white mb-2 italic tracking-tight">Ledger</h1>
+                    <p className="text-zinc-500 text-xs uppercase tracking-[0.4em] font-medium">Order History & Fulfillment</p>
+                </div>
             </div>
 
-            <div className="space-y-4">
-                {orders.map((order) => (
-                    <div key={order.id} className="bg-zinc-950 border border-gold/10 p-6 flex flex-col md:flex-row gap-8 group hover:border-gold/30 transition-all">
-                        {/* Status & ID */}
-                        <div className="w-full md:w-48 space-y-2">
-                            <div className="flex items-center gap-2">
-                                <span className={`w-2 h-2 rounded-full ${order.status === 'paid' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' :
-                                    order.status === 'shipped' ? 'bg-blue-500' : 'bg-zinc-700'
-                                    }`} />
-                                <span className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold">{order.status}</span>
-                            </div>
-                            <p className="text-xs font-mono text-zinc-600">ID: {order.id.slice(0, 13)}...</p>
-                            <p className="text-[10px] text-zinc-500 uppercase tracking-widest">{new Date(order.created_at).toLocaleDateString()}</p>
-                        </div>
-
-                        {/* Client & Amount */}
-                        <div className="flex-grow space-y-1">
-                            <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-medium whitespace-nowrap overflow-hidden text-ellipsis">Customer</p>
-                            <h3 className="text-white font-sans text-sm">{order.profiles?.email || 'Guest Client'}</h3>
-                            <div className="flex items-center gap-4 mt-4">
-                                <div className="bg-gold/5 border border-gold/10 px-3 py-1">
-                                    <p className="text-[8px] uppercase tracking-widest text-gold/60">Total Value</p>
-                                    <p className="text-sm font-serif text-gold">${order.total_amount}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Address (Truncated) */}
-                        <div className="flex-grow space-y-1 max-w-[200px]">
-                            <p className="text-[10px] uppercase tracking-widest text-zinc-500 font-medium">Destination</p>
-                            <p className="text-xs text-zinc-400 leading-relaxed font-sans">
-                                {order.shipping_address?.address?.city}, {order.shipping_address?.address?.country}
-                            </p>
-                        </div>
-
-                        {/* Action */}
-                        <div className="flex items-center gap-3">
-
-                            {order.status === 'paid' && (
-                                <button
-                                    onClick={() => handleFulfill(order.id)}
-                                    disabled={actionLoading === order.id}
-                                    className="flex items-center gap-2 bg-gold text-black px-6 py-3 text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-white transition-all disabled:opacity-50"
-                                >
-                                    {actionLoading === order.id ? <Loader2 size={14} className="animate-spin" /> : <Package size={14} />}
-                                    Generate Label
-                                </button>
-                            )}
-                            {order.status === 'shipped' && (
-                                <div className="flex flex-col gap-2 items-end">
-                                    <span className="text-[9px] uppercase tracking-widest text-emerald-500 flex items-center gap-1 font-bold">
-                                        <CheckCircle2 size={12} />
-                                        Dispatched
-                                    </span>
-                                    {order.tracking_number && (
-                                        <span className="text-[9px] font-mono text-zinc-500">{order.tracking_number}</span>
-                                    )}
-                                    {order.shipping_label_url && (
-                                        <a
-                                            href={order.shipping_label_url}
-                                            target="_blank"
-                                            className="text-[9px] uppercase tracking-widest text-gold hover:text-white flex items-center gap-1 transition-colors border-b border-gold/30 hover:border-white"
-                                        >
-                                            <ExternalLink size={10} />
-                                            Print Label
-                                        </a>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                ))}
-
-                {!orders.length && (
-                    <div className="py-20 text-center border border-dashed border-gold/20">
-                        <Truck size={40} className="mx-auto text-zinc-800 mb-4" />
-                        <p className="text-zinc-500 uppercase tracking-widest text-[10px]">No pending logistics found.</p>
-                    </div>
-                )}
+            <div className="bg-zinc-950 border border-white/5 overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead>
+                            <tr className="border-b border-white/5 text-[10px] uppercase tracking-[0.3em] text-zinc-500">
+                                <th className="px-8 py-4 font-bold">Ref No.</th>
+                                <th className="px-8 py-4 font-bold">Customer</th>
+                                <th className="px-8 py-4 font-bold">Payment</th>
+                                <th className="px-8 py-4 font-bold">Fulfillment</th>
+                                <th className="px-8 py-4 font-bold">Date</th>
+                                <th className="px-8 py-4 font-bold text-right">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody className="text-[11px] text-zinc-400 font-light">
+                            {orders?.map((order) => (
+                                <tr key={order.id} className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group">
+                                    <td className="px-8 py-5">
+                                        <Link href={`/admin/orders/${order.id}`} className="font-mono text-zinc-500 group-hover:text-gold transition-colors block">
+                                            #{order.id.slice(0, 8)}
+                                        </Link>
+                                    </td>
+                                    <td className="px-8 py-5">
+                                        <div className="flex flex-col">
+                                            <span className="text-white text-sm tracking-wide lowercase">{order.customer_email}</span>
+                                            <span className="text-[9px] text-zinc-600 uppercase tracking-widest mt-0.5 font-bold">Verified User</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-5">
+                                        <span className={`px-3 py-1 text-[9px] uppercase tracking-widest font-bold border ${order.status === 'paid' ? 'border-emerald-500/30 text-emerald-500 bg-emerald-500/5' : 'border-amber-500/30 text-amber-500 bg-amber-500/5'
+                                            }`}>
+                                            {order.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-8 py-5">
+                                        <span className={`px-3 py-1 text-[9px] uppercase tracking-widest font-bold border ${order.fulfillment_status === 'fulfilled' ? 'border-blue-500/30 text-blue-400 bg-blue-500/5' : 'border-zinc-700 text-zinc-500'
+                                            }`}>
+                                            {order.fulfillment_status}
+                                        </span>
+                                    </td>
+                                    <td className="px-8 py-5 text-zinc-600 font-serif italic">
+                                        {new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                    </td>
+                                    <td className="px-8 py-5 text-right">
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-white font-medium text-[13px]">${Number(order.amount_total).toFixed(2)}</span>
+                                            <Link href={`/admin/orders/${order.id}`} className="text-[9px] text-gold uppercase tracking-widest mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                Fulfill Item
+                                            </Link>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
-    );
+    )
 }
