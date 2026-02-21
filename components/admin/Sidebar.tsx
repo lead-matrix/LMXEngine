@@ -37,7 +37,7 @@ export function Sidebar() {
 
             <nav className="flex-1 p-6 space-y-2">
                 {menuItems.map((item) => {
-                    const isActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
+                    const isActive = pathname === item.href || (item.href !== "/admin" && pathname?.startsWith(item.href));
 
                     return (
                         <Link
