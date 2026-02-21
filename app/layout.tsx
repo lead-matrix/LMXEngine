@@ -132,8 +132,8 @@ export default async function RootLayout({
             <Footer />
           </div>
           <Toaster position="bottom-right" theme="dark" expand={false} richColors />
-          <Analytics />
         </CartProvider>
+        <Analytics />
       </body>
     </html>
   );
