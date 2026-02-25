@@ -17,7 +17,8 @@ import { Button } from "@/components/ui/button";
 interface Product {
     id: string;
     name: string;
-    base_price: number;
+    price: number;       // from DB (correct column name)
+    base_price?: number; // legacy alias if used elsewhere
     images: string[];
     description?: string;
 }
@@ -39,7 +40,9 @@ export function ProductCard({
     const [isQuickBuyOpen, setIsQuickBuyOpen] = useState(false);
     const [selectedVariant, setSelectedVariant] = useState<Variant | null>(variants[0] || null);
 
-    const price = selectedVariant?.price_override ?? product.base_price;
+    // Support both 'price' (DB column) and 'base_price' (legacy)
+    const basePrice = product.price ?? product.base_price ?? 0;
+    const price = selectedVariant?.price_override ?? basePrice;
     const mainImage = product.images?.[0] || "/logo.jpg";
 
     const handleQuickAdd = () => {
@@ -63,6 +66,7 @@ export function ProductCard({
                     src={mainImage}
                     alt={product.name}
                     fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     className="object-cover transition-transform duration-1000 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-background-primary/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">

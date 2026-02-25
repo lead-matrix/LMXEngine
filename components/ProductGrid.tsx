@@ -16,7 +16,8 @@ interface Variant {
 interface Product {
     id: string;
     name: string;
-    base_price: number;
+    price: number;       // correct DB column name
+    base_price?: number; // kept for backward compat
     images: string[];
     variants: Variant[];
     category_id?: string;
@@ -35,7 +36,7 @@ export function ProductGrid({ categoryId, filter }: ProductGridProps = {}) {
         async function fetchProducts() {
             let query = supabase
                 .from("products")
-                .select("*, variants(*)")
+                .select("id, name, price, images, category_id, is_active")
                 .eq("is_active", true);
 
             // Filter by category if provided
@@ -46,11 +47,9 @@ export function ProductGrid({ categoryId, filter }: ProductGridProps = {}) {
             // Apply additional filters
             if (filter === "new") {
                 query = query.gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
-            } else if (filter === "bestsellers") {
-                query = query.order("created_at", { ascending: false });
-            } else {
-                query = query.order("created_at", { ascending: false });
             }
+
+            query = query.order("created_at", { ascending: false });
 
             const { data, error } = await query;
 
@@ -68,9 +67,6 @@ export function ProductGrid({ categoryId, filter }: ProductGridProps = {}) {
         const productChannel = supabase
             .channel('product-updates')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
-                fetchProducts();
-            })
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'variants' }, () => {
                 fetchProducts();
             })
             .subscribe();
@@ -114,7 +110,7 @@ export function ProductGrid({ categoryId, filter }: ProductGridProps = {}) {
                     <ProductCard
                         key={product.id}
                         product={product}
-                        variants={product.variants}
+                        variants={[]}
                     />
                 ))}
             </div>

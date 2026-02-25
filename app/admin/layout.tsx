@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
-import { Sidebar } from '@/components/admin/Sidebar'
+import AdminLayoutClient from '@/components/admin/AdminLayoutClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,14 +33,5 @@ export default async function AdminLayout({
         redirect('/')
     }
 
-    return (
-        <div className="flex min-h-screen bg-[#111111] text-white">
-            <Sidebar />
-            <main className="flex-1 p-8 overflow-y-auto">
-                <div className="max-w-7xl mx-auto">
-                    {children}
-                </div>
-            </main>
-        </div>
-    )
+    return <AdminLayoutClient>{children}</AdminLayoutClient>
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import {
     LayoutDashboard,
@@ -11,13 +12,11 @@ import {
     ChevronRight,
     Menu,
     ChevronLeft,
-    Palette,
-    FileText,
+    Layers,
     LogOut
 } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetHeader } from "@/components/ui/sheet";
-import Image from "next/image";
 
 export default function AdminLayoutClient({
     children,
@@ -25,12 +24,13 @@ export default function AdminLayoutClient({
     children: React.ReactNode;
 }) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const pathname = usePathname();
 
     const SidebarContent = () => (
         <div className="flex flex-col h-full font-sans bg-background-primary border-r border-gold-primary/10">
             <div className="px-6 py-8 border-b border-gold-primary/10 bg-background-secondary/30">
                 <div className="flex items-center gap-3">
-                    <div className="relative w-8 h-8 rounded-full border border-gold-primary/20 overflow-hidden bg-background-primary flex items-center justify-center">
+                    <div className="relative w-8 h-8 border border-gold-primary/20 bg-background-primary flex items-center justify-center">
                         <span className="font-serif text-gold-primary text-xs">OP</span>
                     </div>
                     <div>
@@ -44,29 +44,28 @@ export default function AdminLayoutClient({
                 </div>
             </div>
 
-            <nav className="flex-grow py-6 space-y-1 overflow-y-auto">
-                <div className="px-6 mb-2">
-                    <span className="text-[8px] uppercase tracking-[0.3em] text-text-mutedDark/60 font-bold">Main</span>
+            <nav className="flex-grow py-6 space-y-0.5 overflow-y-auto">
+                <div className="px-6 mb-3">
+                    <span className="text-[8px] uppercase tracking-[0.3em] text-text-mutedDark/40 font-bold">Operations</span>
                 </div>
-                <AdminNavLink href="/admin" onClick={() => setIsMobileMenuOpen(false)} icon={<LayoutDashboard size={16} />} label="Overview" />
-                <AdminNavLink href="/admin/products" onClick={() => setIsMobileMenuOpen(false)} icon={<Package size={16} />} label="Products" />
-                <AdminNavLink href="/admin/orders" onClick={() => setIsMobileMenuOpen(false)} icon={<ShoppingCart size={16} />} label="Fulfillment" />
-                <AdminNavLink href="/admin/users" onClick={() => setIsMobileMenuOpen(false)} icon={<Users size={16} />} label="Clientele" />
+                <AdminNavLink href="/admin" exact pathname={pathname} onClick={() => setIsMobileMenuOpen(false)} icon={<LayoutDashboard size={15} />} label="Overview" />
+                <AdminNavLink href="/admin/products" pathname={pathname} onClick={() => setIsMobileMenuOpen(false)} icon={<Package size={15} />} label="Products" />
+                <AdminNavLink href="/admin/orders" pathname={pathname} onClick={() => setIsMobileMenuOpen(false)} icon={<ShoppingCart size={15} />} label="Fulfillment" />
+                <AdminNavLink href="/admin/categories" pathname={pathname} onClick={() => setIsMobileMenuOpen(false)} icon={<Layers size={15} />} label="Categories" />
+                <AdminNavLink href="/admin/users" pathname={pathname} onClick={() => setIsMobileMenuOpen(false)} icon={<Users size={15} />} label="Clientele" />
 
                 <div className="pt-6 mt-2">
-                    <div className="px-6 mb-2">
-                        <span className="text-[8px] uppercase tracking-[0.3em] text-text-mutedDark/60 font-bold">Master Controls</span>
+                    <div className="px-6 mb-3">
+                        <span className="text-[8px] uppercase tracking-[0.3em] text-text-mutedDark/40 font-bold">Configuration</span>
                     </div>
-                    <AdminNavLink href="/admin/frontend" onClick={() => setIsMobileMenuOpen(false)} icon={<Palette size={16} />} label="Frontend" />
-                    <AdminNavLink href="/admin/pages" onClick={() => setIsMobileMenuOpen(false)} icon={<FileText size={16} />} label="Pages" />
-                    <AdminNavLink href="/admin/settings" onClick={() => setIsMobileMenuOpen(false)} icon={<Settings size={16} />} label="System" />
+                    <AdminNavLink href="/admin/settings" pathname={pathname} onClick={() => setIsMobileMenuOpen(false)} icon={<Settings size={15} />} label="Site Editor" />
                 </div>
             </nav>
 
             <div className="p-4 border-t border-gold-primary/10 bg-background-secondary/50">
                 <Link
                     href="/"
-                    className="flex items-center gap-3 mb-2 px-4 py-3 text-[9px] uppercase tracking-widest text-text-mutedDark/60 hover:text-text-headingDark hover:bg-gold-primary/5 rounded-sm transition-all group"
+                    className="flex items-center gap-3 mb-1 px-4 py-3 text-[9px] uppercase tracking-widest text-text-mutedDark/50 hover:text-text-headingDark hover:bg-gold-primary/5 transition-all group"
                 >
                     <ChevronLeft size={12} className="group-hover:-translate-x-1 transition-transform" />
                     View Storefront
@@ -77,7 +76,7 @@ export default function AdminLayoutClient({
                         await supabase.auth.signOut();
                         window.location.href = "/";
                     }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-[9px] uppercase tracking-widest text-red-500/70 hover:text-red-400 hover:bg-red-500/10 rounded-sm transition-all group"
+                    className="w-full flex items-center gap-3 px-4 py-3 text-[9px] uppercase tracking-widest text-red-500/60 hover:text-red-400 hover:bg-red-500/8 transition-all"
                 >
                     <LogOut size={12} />
                     Disconnect
@@ -138,19 +137,36 @@ export default function AdminLayoutClient({
     );
 }
 
-function AdminNavLink({ href, icon, label, onClick }: { href: string; icon: React.ReactNode; label: string; onClick?: () => void }) {
+function AdminNavLink({
+    href, icon, label, onClick, pathname, exact
+}: {
+    href: string;
+    icon: React.ReactNode;
+    label: string;
+    onClick?: () => void;
+    pathname?: string | null;
+    exact?: boolean;
+}) {
+    const isActive = exact
+        ? pathname === href
+        : (pathname?.startsWith(href) && href !== '/admin') || pathname === href;
+
     return (
         <Link
             href={href}
             onClick={onClick}
-            className="flex items-center gap-4 px-6 py-4 text-[10px] uppercase tracking-[0.3em] rounded-none border-l-2 border-transparent hover:border-gold-primary hover:bg-gold-primary/5 transition-all group"
+            className={`flex items-center gap-4 px-6 py-3.5 text-[10px] uppercase tracking-[0.25em] border-l-2 transition-all duration-200 ${isActive
+                    ? 'border-gold-primary bg-gold-primary/8 text-gold-primary'
+                    : 'border-transparent text-text-mutedDark/50 hover:border-gold-primary/40 hover:bg-gold-primary/4 hover:text-text-headingDark'
+                }`}
         >
-            <span className="text-text-mutedDark/40 group-hover:text-gold-primary transition-colors">
+            <span className={`transition-colors ${isActive ? 'text-gold-primary' : 'text-text-mutedDark/40'}`}>
                 {icon}
             </span>
-            <span className="font-light text-text-mutedDark group-hover:text-text-headingDark transition-colors">
+            <span className={`font-light transition-colors ${isActive ? 'text-gold-primary' : ''}`}>
                 {label}
             </span>
+            {isActive && <div className="ml-auto w-1 h-1 bg-gold-primary rounded-full" />}
         </Link>
     );
 }

@@ -120,7 +120,7 @@
   width: 2px;
 }
 
-/* Animation utilities */
+/* ─── Animation utilities ─── */
 .animate-luxury-fade {
   animation: luxury-fade 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
@@ -134,5 +134,140 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* ─── Stagger children animations ─── */
+.stagger-children>* {
+  opacity: 0;
+  animation: luxury-fade 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.stagger-children>*:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.stagger-children>*:nth-child(2) {
+  animation-delay: 0.10s;
+}
+
+.stagger-children>*:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+.stagger-children>*:nth-child(4) {
+  animation-delay: 0.20s;
+}
+
+.stagger-children>*:nth-child(5) {
+  animation-delay: 0.25s;
+}
+
+.stagger-children>*:nth-child(6) {
+  animation-delay: 0.30s;
+}
+
+/* ─── Obsidian Glass Panel ─── */
+.glass-panel {
+  background: rgba(17, 17, 17, 0.72);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid rgba(212, 175, 55, 0.08);
+}
+
+.glass-panel-light {
+  background: rgba(26, 20, 16, 0.60);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  border: 1px solid rgba(212, 175, 55, 0.06);
+}
+
+/* ─── Gold Shimmer Effect ─── */
+.gold-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.gold-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg,
+      transparent 40%,
+      rgba(212, 175, 55, 0.06) 50%,
+      transparent 60%);
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ─── Gold Glow on hover ─── */
+.gold-glow-hover {
+  transition: box-shadow 0.4s ease;
+}
+
+.gold-glow-hover:hover {
+  box-shadow: 0 0 24px rgba(212, 175, 55, 0.12), 0 0 1px rgba(212, 175, 55, 0.3);
+}
+
+/* ─── Subtle gold border pulse ─── */
+.border-gold-pulse {
+  animation: border-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes border-pulse {
+
+  0%,
+  100% {
+    border-color: rgba(212, 175, 55, 0.08);
+  }
+
+  50% {
+    border-color: rgba(212, 175, 55, 0.20);
+  }
+}
+
+/* ─── Mobile Bottom Nav Dock ─── */
+@media (max-width: 768px) {
+  .mobile-dock {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    background: rgba(17, 17, 17, 0.88);
+    backdrop-filter: blur(24px) saturate(1.5);
+    -webkit-backdrop-filter: blur(24px) saturate(1.5);
+    border-top: 0.5px solid rgba(212, 175, 55, 0.15);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* ─── Focus accessible outline override ─── */
+:focus-visible {
+  outline: 1.5px solid rgba(212, 175, 55, 0.6);
+  outline-offset: 2px;
+}
+
+/* ─── Reduced motion respect ─── */
+@media (prefers-reduced-motion: reduce) {
+
+  .animate-luxury-fade,
+  .stagger-children>*,
+  .gold-shimmer::after,
+  .border-gold-pulse {
+    animation: none !important;
+  }
+
+  .gold-glow-hover:hover {
+    box-shadow: none;
   }
 }
