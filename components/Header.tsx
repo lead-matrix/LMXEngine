@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingBag, User, Search, Menu, X, Instagram, ArrowRight } from "lucide-react";
+import { ShoppingBag, User, Search, Menu, X, ArrowRight } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import Image from "next/image";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
@@ -22,12 +22,12 @@ export default function Header() {
     const [searchResults, setSearchResults] = useState<{
         id: string; name: string; images: string[]; price: number; slug: string;
     }[]>([]);
-    const supabase = createClient();
     const [user, setUser] = useState<{ email?: string } | null>(null);
     const [scrolled, setScrolled] = useState(false);
 
     // Auth listener
     useEffect(() => {
+        const supabase = createClient();
         const getUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             setUser(user);
@@ -48,8 +48,12 @@ export default function Header() {
 
     // Live search
     useEffect(() => {
-        if (searchQuery.length < 3) { setSearchResults([]); return; }
+        const supabase = createClient();
         const timer = setTimeout(async () => {
+            if (searchQuery.length < 3) {
+                setSearchResults([]);
+                return;
+            }
             const { data } = await supabase
                 .from("products")
                 .select("id, name, images, price, slug")
